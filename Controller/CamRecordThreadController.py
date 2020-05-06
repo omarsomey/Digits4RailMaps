@@ -46,7 +46,7 @@ class CamThreadController:
 		self.frames_recorder.write("frames_id,frames_timestamp \n")
 		self.frames_recorder.close()
 		video_filename = videoDirectory + "track_video_"+ self.name +"_" + id +"_" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".avi"
-		self.video_handler.open(video_filename, self.fourcc_codec, 28, (self.client.camera.width,self.client.camera.height))
+		self.video_handler.open(video_filename, self.fourcc_codec, 30, (self.client.camera.width,self.client.camera.height))
 		return  frames_filename, video_filename
 
 	def openfiles(self, frames_filename):

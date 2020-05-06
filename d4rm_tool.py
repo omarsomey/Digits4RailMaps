@@ -178,7 +178,7 @@ class ThreadedClient:
             if not self.record:
                 self.video_output = False
                 self.camThread.start("Properties/cam.properties", self.cam_properties["video_path"])
-                #self.cam1Thread.start("Properties/second-cam.properties", self.second_cam_properties["video_path"])
+                self.cam1Thread.start("Properties/second-cam.properties", self.second_cam_properties["video_path"])
                 self.record = True
                 self.gui.btn_record.configure(text="Recording", bg="red")
                 self.gui.progress_bar.start(int(10000/100)) #  duration of videos in seconds divided by 100
@@ -195,7 +195,7 @@ class ThreadedClient:
         if self.record:
             self.video_output = True
             self.camThread.stop()
-            #self.cam1Thread.stop()
+            self.cam1Thread.stop()
             self.record = False
             self.gui.btn_record.configure(text="Record Data", bg="green")
             self.gui.progress_bar.stop()
