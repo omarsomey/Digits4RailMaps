@@ -12,8 +12,8 @@ import numpy
 from GpsCapture import GpsCapture
 from See3Cam import See3Cam
 from FPS import FPS
-from RecordingThreadController import RecordingThreadController
-from CamRecordThreadController import CamThreadController
+from Controller.RecordingThreadController import RecordingThreadController
+from Controller.CamRecordThreadController import CamThreadController
 import cv2
 from GuiPart import GuiPart
 import serial
@@ -40,7 +40,6 @@ class ThreadedClient:
     """
 
     def __init__(self, master):
-
 
         """
         Start the GUI and the asynchronous threads. We are in the main
