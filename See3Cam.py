@@ -40,7 +40,6 @@ class See3Cam:
 
     
     def read(self):
-        #return self.Q.get()
         return self.grabbed ,self.frame
 
     def stop(self):

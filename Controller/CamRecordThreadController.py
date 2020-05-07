@@ -10,7 +10,7 @@ from FPS import FPS
 class CamThreadController:
 	"""Separate Thread Class responsible of the files recording
 	"""
-	def __init__(self, client, cam, name, gui):
+	def __init__(self, client, cam, name, properties, gui):
 		"""Constructor
 		
 		Arguments:
@@ -20,8 +20,12 @@ class CamThreadController:
 		self.client = client
 		self.cam = cam
 		self.name = name
-		self.duration = 10
+		self.properties = properties
 		self.gui = gui
+		self.properties_path = self.properties['properties-path']
+		self.video_path = self.properties['video-path']
+		self.video_id = self.properties['video-id']
+		self.duration = self.properties['duration']
 		self.video_handler = cv2.VideoWriter()
 		self.record_thread = None
 		self.stop_record_thread = threading.Event()
@@ -40,7 +44,6 @@ class CamThreadController:
 			[str] -- frames file name.
 			[str] -- video file name.
 		"""
-
 		frames_filename = videoDirectory + "track_frames_" + self.name +"_"+ id +"_"+ time.strftime("%d-%m-%Y-%H-%M-%S") + ".csv"
 		self.frames_recorder = open(frames_filename, 'a')
 		self.frames_recorder.write("frames_id,frames_timestamp \n")
@@ -71,14 +74,14 @@ class CamThreadController:
 		videoHandler.write(frame)
 		framesHandler.close()
 	
-	def record(self, properties, path):
+	def record(self):
 		"""This function is the main thread 
 		"""
 		self.fps.start()
 		start = time.time()
-		id = self.getId(properties)
+		id = self.getId()
 		frame_id = 0
-		frames_filename, video_filename = self.getNewFiles(path, id, self.cam)
+		frames_filename, video_filename = self.getNewFiles(self.video_path, id, self.cam)
 		while  not self.stop_record_thread.is_set():
 			ret, frame = self.cam.read()
 			if np.array_equal(self.f, frame):
@@ -86,12 +89,12 @@ class CamThreadController:
 			self.fps.update()
 			self.f = frame
 			currentTime = time.time()
-			if(int(currentTime-start) >= self.duration):
+			if(int(currentTime-start) >= int(self.duration)):
 				self.fps.stop()
 				print("[INFO] elapsed time: {:.2f}".format(self.fps.elapsed()))
 				print("[INFO] approx. FPS: {:.2f}".format(self.fps.fps()))
-				id = self.getId(properties)
-				frames_filename, video_filename = self.getNewFiles(path, id, self.name)
+				id = self.getId()
+				frames_filename, video_filename = self.getNewFiles(self.video_path, id, self.name)
 				frame_id = 0
 				start = time.time()
 				self.fps.start()
@@ -100,11 +103,11 @@ class CamThreadController:
 			frame_id = frame_id +1
 		self.video_handler.release()
 			
-	def start(self, properties, path):
+	def start(self):
 		"""Function to start the recording thread
 		"""
 		self.stop_record_thread.clear()
-		self.record_thread = threading.Thread(target=self.record, args=(properties, path,))
+		self.record_thread = threading.Thread(target=self.record, args=())
 		self.record_thread.setDaemon(True)
 		self.record_thread.start()
 		
@@ -124,7 +127,7 @@ class CamThreadController:
 		"""
 		return self.record_thread.isAlive()
 
-	def getId(self, properties):
+	def getId(self):
 		"""Function to get a new ID each time a file is created
 		
 		Returns:
@@ -132,12 +135,12 @@ class CamThreadController:
 		"""
 		# Read last availaible id 
 		p = Properties()
-		with open(properties, 'rb') as f:
+		with open(self.properties_path, 'rb') as f:
 			p.load(f, 'utf-8')
-		id = str(int(p["video_id"].data))
+		id = str(int(p["video-id"].data))
 		# Increment the id in the file
-		p["video_id"]=str(int(p["video_id"].data) +1)
-		with open(properties, 'wb') as f:
+		p["video-id"]=str(int(p["video-id"].data) +1)
+		with open(self.properties_path, 'wb') as f:
 			p.store(f, encoding="utf-8")
 
 		# Return availaible id

@@ -1,5 +1,7 @@
 import serial
 import serial.tools.list_ports
+from threading import Thread
+
 
 class GpsCapture:
 
@@ -29,6 +31,7 @@ class GpsCapture:
         self.age = ""
         self.checksum = ""
         self.open_gps(self.get_port()[1], self.baudrate)
+        self.stopped = False
 
     def get_port(self):
         """ This function get the different ports of the laptop,
@@ -68,47 +71,54 @@ class GpsCapture:
                 print("There was a Problem opening the GPS device")
                 self.running = False
         else:
-            self.running = False        
-        
-    def check_gps(self):
-        """This function check if the gps is running
-        
-        Returns:
-            bool -- True: Gps Running, False : Gps not running
-        """
-        return self.running
+            self.running = False
 
-    def read(self):
+    def start(self):
+        t = Thread(target=self.update, args=())
+        t.daemon = True
+        t.start()
+        return self
+
+    def update(self):
+        while True:
+            if self.stopped:
+                return
+            try:
+                self.gpsSentence = self.ser.readline()
+                self.split(self.gpsSentence)
+            except:
+                print("Cannot read the GPS")
+
+
+    def split(self, gpsSentence):
         """This function read he differents values of the gps.
         """
-        try:
-            self.gpsSentence = self.ser.readline()
-            stringSplit = str(self.gpsSentence).split(',')
-            if stringSplit[0] == "b\'$GNGGA":
-                self.sentence_identifier = stringSplit[0]
-                self.g_time              = stringSplit[1]
-                self.latitude            = stringSplit[2]
-                self.latitude_direction  = stringSplit[3]
-                self.longitude           = stringSplit[4]
-                self.longitude_direction = stringSplit[5]
-                self.quality             = stringSplit[6]
-                self.hdop                = stringSplit[7]
-                self.altitude            = stringSplit[8]
-                self.altitude_unit       = stringSplit[9]
-                self.undulation          = stringSplit[10]  
-                self.u_unit              = stringSplit[11]
-                self.age                 = stringSplit[12]
-                self.checksum            = stringSplit[13]
-                self.timestamp           = stringSplit[14]
-        except:
-            print("Cannot read the GPS")
-            self.running = False
-        
+        stringSplit = str(self.gpsSentence).split(',')
+        if stringSplit[0] == "b\'$GNGGA":
+            self.sentence_identifier = stringSplit[0]
+            self.g_time              = stringSplit[1]
+            self.latitude            = stringSplit[2]
+            self.latitude_direction  = stringSplit[3]
+            self.longitude           = stringSplit[4]
+            self.longitude_direction = stringSplit[5]
+            self.quality             = stringSplit[6]
+            self.hdop                = stringSplit[7]
+            self.altitude            = stringSplit[8]
+            self.altitude_unit       = stringSplit[9]
+            self.undulation          = stringSplit[10]  
+            self.u_unit              = stringSplit[11]
+            self.age                 = stringSplit[12]
+            self.checksum            = stringSplit[13]
+            self.timestamp           = stringSplit[14]
 
 
+    def read(self):
+        return self.gpsSentence
+    
 
     def stop(self):
         """This function stops the Gps 
         """
+        self.stopped = True
         self.running = False
         print("Gps stopped")

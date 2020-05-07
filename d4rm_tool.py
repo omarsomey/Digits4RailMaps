@@ -14,6 +14,7 @@ from See3Cam import See3Cam
 from FPS import FPS
 from Controller.RecordingThreadController import RecordingThreadController
 from Controller.CamRecordThreadController import CamThreadController
+from Controller.GpsRecordThreadController import GpsThreadController
 import cv2
 from GuiPart import GuiPart
 import serial
@@ -60,41 +61,41 @@ class ThreadedClient:
         self.check = False
         self.cam_properties= self.getProperties("Properties/cam.properties")
         self.second_cam_properties = self.getProperties("Properties/second-cam.properties")
+        self.gps_properties = self.getProperties("Properties/gps.properties")
 
-
-
-        # principal thread
-        
-        #Set up Gps
-        self.gps = GpsCapture()
         self.running = 1
         self.cameras_state = self.find_cam()
+        self.verify_gps_connection, self.gps_port = self.find_gps()
         print(self.cameras_state)
+        print(self.verify_gps_connection)
+
         # Set up the GUI part
-        self.gui = GuiPart(master, self, self.cameras_state, self.gps.running, self.recordData, self.stopRecord)
+        self.gui = GuiPart(master, self, self.cameras_state, self.verify_gps_connection, self.recordData, self.stopRecord)
+
         if self.cameras_state[0]:
-            print("f connected")
             self.camera = See3Cam(src=self.cameras_state[1], width=1280, height=720, framerate=30, name="cam")
             self.camera.start()
-            self.camThread = CamThreadController(self, self.camera, self.camera.name, self.gui)
-            print(" f thread opened")
+            self.camThread = CamThreadController(self, self.camera, self.camera.name, self.cam_properties, self.gui)
         if self.cameras_state[2]:
-            print("s connected")
             self.camera1 = See3Cam(src=self.cameras_state[3], width=1280, height=720, framerate=30, name="cam1")
             self.camera1.start()
-            self.cam1Thread = CamThreadController(self, self.camera1, self.camera1.name, self.gui)
-            print("s thread opened")
+            self.cam1Thread = CamThreadController(self, self.camera1, self.camera1.name, self.second_cam_properties, self.gui)
+        if self.verify_gps_connection:
+            self.gps = GpsCapture()
+            self.gps.start()
+            self.gpsThread = GpsThreadController(self, self.gps, self.gps_properties, self.gui)
+
 
         self.fps = FPS()
  
         
         # Set up the thread for the GPS checking
-        gps_controller = threading.Thread(target=self.checkGpsConnection, args=(2,))
+        gps_controller = threading.Thread(target=self.checkGpsConnection, args=(1,))
         gps_controller.setDaemon(True)
         gps_controller.start()
 
         # Set up the thread for the camera checking
-        camera_controller = threading.Thread(target=self.checkCameraConnection, args=(2,))
+        camera_controller = threading.Thread(target=self.checkCameraConnection, args=(1,))
         camera_controller.setDaemon(True)
         camera_controller.start()
 
@@ -177,8 +178,9 @@ class ThreadedClient:
         if self.check:
             if not self.record:
                 self.video_output = False
-                self.camThread.start("Properties/cam.properties", self.cam_properties["video_path"])
-                self.cam1Thread.start("Properties/second-cam.properties", self.second_cam_properties["video_path"])
+                self.camThread.start()
+                self.cam1Thread.start()
+                self.gpsThread.start()
                 self.record = True
                 self.gui.btn_record.configure(text="Recording", bg="red")
                 self.gui.progress_bar.start(int(10000/100)) #  duration of videos in seconds divided by 100
@@ -196,6 +198,7 @@ class ThreadedClient:
             self.video_output = True
             self.camThread.stop()
             self.cam1Thread.stop()
+            self.gpsThread.stop()
             self.record = False
             self.gui.btn_record.configure(text="Record Data", bg="green")
             self.gui.progress_bar.stop()
@@ -230,6 +233,18 @@ class ThreadedClient:
             return (True, camera_indexes[0], False, None)
         else:
             return (False, None, False, None)
+
+    def find_gps(self):
+        myports = [tuple(p) for p in list(serial.tools.list_ports.comports())]
+
+        for t in myports:
+            if 'FT232R USB UART' in t:
+                gpsport = t[0]
+                self.isConnected = True
+                return(True, gpsport)
+
+        self.isConnected= False
+        return (False, None)
     
 
 
