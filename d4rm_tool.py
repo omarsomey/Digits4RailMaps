@@ -137,6 +137,7 @@ class ThreadedClient:
         """
         while True:
             # Get the GPS port connection
+            print(threading.active_count())
             verify_gps_connection, gps_port = self.gps.get_port()
             if not verify_gps_connection:
                 self.gps.running = False
@@ -183,7 +184,7 @@ class ThreadedClient:
                 self.gpsThread.start()
                 self.record = True
                 self.gui.btn_record.configure(text="Recording", bg="red")
-                self.gui.progress_bar.start(int(10000/100)) #  duration of videos in seconds divided by 100
+                #self.gui.progress_bar.start(int(10000/100)) #  duration of videos in seconds divided by 100
             else:
                 print("Alreadiy recording")
         else:
@@ -201,7 +202,7 @@ class ThreadedClient:
             self.gpsThread.stop()
             self.record = False
             self.gui.btn_record.configure(text="Record Data", bg="green")
-            self.gui.progress_bar.stop()
+            #self.gui.progress_bar.stop()
         else:
             print("There is no recording")
 

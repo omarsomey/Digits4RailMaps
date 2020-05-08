@@ -104,7 +104,7 @@ class GuiPart:
         self.rightframe.pack_propagate(False)
         self.systemInfo()
         self.recordingButtons()
-        self.progressBar()
+        #self.progressBar()
         
         
 
