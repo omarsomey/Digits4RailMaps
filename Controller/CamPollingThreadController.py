@@ -10,11 +10,14 @@ import PIL
 from PIL import Image
 from PIL import ImageTk
 import tkinter
+from FPS import FPS
+import imutils
+
 
 class CamPollingThreadController:
 	"""Separate Thread Class responsible of the files recording
 	"""
-	def __init__(self, client, cam, gui):
+	def __init__(self, client, cam, gui, label):
 		"""Constructor
 		
 		Arguments:
@@ -24,21 +27,26 @@ class CamPollingThreadController:
 		self.client = client
 		self.cam = cam
 		self.gui = gui
+		self.label = label
 		self.display_thread = None
 		self.stop_display_thread = threading.Event()
 		self.f = None
-
-
 	
 	def displayFrames(self):
-		while not self.stop_display_thread.is_set():
+		while not self.stop_display_thread.is_set() and not self.client.exitFlag:
 			ret, frame = self.cam.read()
-			if np.array_equal(self.f, frame):
+			if np.array_equal(self.f, frame) and frame is None:
 				continue
 			self.f = frame
 			self.photo = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 			self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.photo)) # Transform the frame into PIL image
-			self.img = self.gui.canvas.create_image(0, 0, image = self.photo, anchor = tkinter.NW) # Display the image into the canvas GUI
+			if self.label == 1:
+				self.gui.videoframe1.configure(image=self.photo)
+				self.gui.videoframe1.image = self.photo
+			if self.label == 2:
+				self.gui.videoframe2.configure(image=self.photo)
+				self.gui.videoframe2.image = self.photo
+				
 
 	def start(self):
 		"""Function to start the recording thread
@@ -52,9 +60,8 @@ class CamPollingThreadController:
 		"""Function to sto the recording thread
 		"""
 		self.stop_display_thread.set()
-		self.display_thread.join(4)
+		self.display_thread.join(0.1)
 		self.display_thread = None
-
 	def isAlive(self):
 		"""Function to check if the thread is still alive
 		

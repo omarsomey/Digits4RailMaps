@@ -72,7 +72,7 @@ class GpsThreadController:
 		id = self.getId()
 		frame_id = 0
 		gps_filename = self.getNewFiles(self.gps_path, id)
-		while  not self.stop_record_thread.is_set():
+		while  not self.stop_record_thread.is_set() and not self.client.exitFlag:
 			self.gpsSentence = self.gps.read()
 			currentTime = time.time()
 			if(int(currentTime-start) >= int(self.duration)):

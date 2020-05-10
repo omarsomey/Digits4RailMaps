@@ -58,7 +58,7 @@ class GuiPart:
         self.leftFrame()
         self.rightFrame()
         self.videoFrame()
-        self.framesCanvas()
+        #self.framesCanvas()
 
     def topFrame(self):
         #welcome text
@@ -130,25 +130,25 @@ class GuiPart:
     
     def videoFrame(self):
         # Set up of the Right frame (Camera output)
-        self.videoframe = LabelFrame(self.video_tab, text="Camera output", font=("Arial Bold", 15), height=self.frame_height, width=self.frame_width,borderwidth=5, relief=tkinter.GROOVE)
-        self.videoframe.pack(side = tkinter.RIGHT)
-        self.videoframe.pack_propagate(False)
-        # Set up of the left frame (Camera output 1)
-        self.videoframe1 = LabelFrame(self.video_tab, text="Second Camera output", font=("Arial Bold", 15), height=self.frame_height, width=self.frame_width,borderwidth=5, relief=tkinter.GROOVE)
+        self.videoframe1 = Label(self.video_tab, text="Camera output", font=("Arial Bold", 15), height=self.frame_height, width=self.frame_width,borderwidth=5, relief=tkinter.GROOVE)
         self.videoframe1.pack(side = tkinter.RIGHT)
         self.videoframe1.pack_propagate(False)
+        # Set up of the left frame (Camera output 1)
+        self.videoframe2 = Label(self.video_tab, text="Second Camera output", font=("Arial Bold", 15), height=self.frame_height, width=self.frame_width,borderwidth=5, relief=tkinter.GROOVE)
+        self.videoframe2.pack(side = tkinter.RIGHT)
+        self.videoframe2.pack_propagate(False)
     
     
-    def framesCanvas(self):
-        # Set of the canvas comporting the camera output frames
-        self.canvas = tkinter.Canvas(self.videoframe, width = self.frame_width, height = self.frame_height, highlightcolor = "red", bd=5)
-        self.canvas.pack(anchor=tkinter.CENTER)
-        self.first_canvas = self.canvas.create_text(0,0, font="Times 20 italic bold", text="  Camera Not Connected !", anchor = tkinter.NW)
+    # def framesCanvas(self):
+    #     # Set of the canvas comporting the camera output frames
+    #     self.canvas = tkinter.Canvas(self.videoframe, width = self.frame_width, height = self.frame_height, highlightcolor = "red", bd=5)
+    #     self.canvas.pack(anchor=tkinter.CENTER)
+    #     self.first_canvas = self.canvas.create_text(0,0, font="Times 20 italic bold", text="  Camera Not Connected !", anchor = tkinter.NW)
 
-        # Set of the canvas comporting the second camera output frames
-        self.canvas1 = tkinter.Canvas(self.videoframe1, width = self.frame1_width, height = self.frame1_height, highlightcolor = "red", bd=5)
-        self.canvas1.pack(anchor=tkinter.CENTER)
-        self.second_canvas = self.canvas1.create_text(0,0, font="Times 20 italic bold", text="  Camera Not Connected !", anchor = tkinter.NW)
+    #     # Set of the canvas comporting the second camera output frames
+    #     self.canvas1 = tkinter.Canvas(self.videoframe1, width = self.frame1_width, height = self.frame1_height, highlightcolor = "red", bd=5)
+    #     self.canvas1.pack(anchor=tkinter.CENTER)
+    #     self.second_canvas = self.canvas1.create_text(0,0, font="Times 20 italic bold", text="  Camera Not Connected !", anchor = tkinter.NW)
 
 
     def processIncoming(self,camStatus, gpsStatus, videoOutput, frame, frame1):
@@ -159,42 +159,43 @@ class GuiPart:
             self.gps_device_label.configure(text="Connected")
         else:
             self.gps_device_label.configure(text="Disconnected")
+
             
-        # If First Camera connected
-        if camStatus[0]:
-            self.camera_device_label.configure(text="Connected")
-            if videoOutput:
-                if frame is not None:
-                    self.notification_label.configure(text="No Recording in Procces, Press the record button to start recording")
-                    self.photo = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.photo)) # Transform the frame into PIL image
-                    self.img = self.canvas.create_image(0, 0, image = self.photo, anchor = tkinter.NW) # Display the image into the canvas GUI
-                    #self.canvas.itemconfigure(self.first_canvas, image=self.photo)
-            else:
-                self.canvas.itemconfigure(self.first_canvas, text="  Can't show the video, recording in process.")
-                self.notification_label.configure(text="Recording in Procces")
+        # # If First Camera connected
+        # if camStatus[0]:
+        #     self.camera_device_label.configure(text="Connected")
+        #     if videoOutput:
+        #         if frame is not None:
+        #             self.notification_label.configure(text="No Recording in Procces, Press the record button to start recording")
+        #             self.photo = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        #             self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.photo)) # Transform the frame into PIL image
+        #             self.img = self.canvas.create_image(0, 0, image = self.photo, anchor = tkinter.NW) # Display the image into the canvas GUI
+        #             #self.canvas.itemconfigure(self.first_canvas, image=self.photo)
+        #     else:
+        #         self.canvas.itemconfigure(self.first_canvas, text="  Can't show the video, recording in process.")
+        #         self.notification_label.configure(text="Recording in Procces")
 
-        else:
-            self.camera_device_label.configure(text="Disconnected")
-            self.canvas.itemconfigure(self.first_canvas, text=" Camera Not Connected !")
+        # else:
+        #     self.camera_device_label.configure(text="Disconnected")
+        #     self.canvas.itemconfigure(self.first_canvas, text=" Camera Not Connected !")
         
-        # If second camera connected
-        if camStatus[2]:
-            self.camera1_device_label.configure(text="Connected")
-            if videoOutput:
-                if frame1 is not None:
-                    self.notification_label.configure(text="No Recording in Procces, Press the record button to start recording")
-                    self.photo1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB)
-                    self.photo1 = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.photo1)) # Transform the frame into PIL image
-                    self.img1 = self.canvas1.create_image(0, 0, image = self.photo1, anchor = tkinter.NW) # Display the image into the canvas GUI
-                    #self.canvas1.itemconfigure(self.first_canvas, image=self.photo1)
-            else:
-                self.canvas1.itemconfigure(self.second_canvas, text="  Can't show the video, recording in process.")
-                self.notification_label.configure(text="Recording in Procces")
+        # # If second camera connected
+        # if camStatus[2]:
+        #     self.camera1_device_label.configure(text="Connected")
+        #     if videoOutput:
+        #         if frame1 is not None:
+        #             self.notification_label.configure(text="No Recording in Procces, Press the record button to start recording")
+        #             self.photo1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB)
+        #             self.photo1 = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.photo1)) # Transform the frame into PIL image
+        #             self.img1 = self.canvas1.create_image(0, 0, image = self.photo1, anchor = tkinter.NW) # Display the image into the canvas GUI
+        #             #self.canvas1.itemconfigure(self.first_canvas, image=self.photo1)
+        #     else:
+        #         self.canvas1.itemconfigure(self.second_canvas, text="  Can't show the video, recording in process.")
+        #         self.notification_label.configure(text="Recording in Procces")
 
-        else:
-            self.camera1_device_label.configure(text="Disconnected")
-            self.canvas1.itemconfigure(self.second_canvas, font="Times 20 italic bold", text=" Camera Not Connected !")
+        # else:
+        #     self.camera1_device_label.configure(text="Disconnected")
+        #     self.canvas1.itemconfigure(self.second_canvas, font="Times 20 italic bold", text=" Camera Not Connected !")
 
         # # If both cameras are disconnected
         # if not camStatus[0] or not camStatus[2]:

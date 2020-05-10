@@ -82,7 +82,7 @@ class CamThreadController:
 		id = self.getId()
 		frame_id = 0
 		frames_filename, video_filename = self.getNewFiles(self.video_path, id, self.cam)
-		while  not self.stop_record_thread.is_set():
+		while  not self.stop_record_thread.is_set() and not self.client.exitFlag:
 			ret, frame = self.cam.read()
 			if np.array_equal(self.f, frame):
 				continue
@@ -115,7 +115,7 @@ class CamThreadController:
 		"""Function to sto the recording thread
 		"""
 		self.stop_record_thread.set()
-		self.record_thread.join(4)
+		self.record_thread.join(0.1)
 		self.record_thread = None
 		self.fps.stop()
 

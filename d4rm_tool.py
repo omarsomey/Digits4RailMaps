@@ -49,6 +49,7 @@ class ThreadedClient:
         the GUI as well.
         """
         self.master = master
+        self.exitFlag = False ## Flag to terminate all the threads 
         self.cam_prop_path = "Properties/cam.properties"
         self.second_cam_prop_path = "Properties/second-cam.properties"
         self.gps_prop_path = "Properties/gps.properties"
@@ -75,13 +76,13 @@ class ThreadedClient:
         if self.cameras_state[0]:
             self.camera = See3Cam(src=self.cameras_state[1], width=1280, height=720, framerate=30, name="cam")
             self.camera.start()
-            self.camPollThread = CamPollingThreadController(self, self.camera, self.gui)
+            self.camPollThread = CamPollingThreadController(self, self.camera, self.gui, 1)
             self.camPollThread.start()
             self.camThread = CamThreadController(self, self.camera, self.camera.name, self.cam_properties, self.gui)
         if self.cameras_state[2]:
             self.camera1 = See3Cam(src=self.cameras_state[3], width=1280, height=720, framerate=30, name="cam1")
             self.camera1.start()
-            self.camPollThread1 = CamPollingThreadController(self, self.camera1, self.gui)
+            self.camPollThread1 = CamPollingThreadController(self, self.camera1, self.gui, 2)
             self.camPollThread1.start()
             self.cam1Thread = CamThreadController(self, self.camera1, self.camera1.name, self.second_cam_properties, self.gui)
         if self.verify_gps_connection:
@@ -136,7 +137,7 @@ class ThreadedClient:
         Thread to Check the port connection and the status of the GPS System
         every second.
         """
-        while True:
+        while not self.exitFlag:
             # Get the GPS port connection
             verify_gps_connection, gps_port = self.gps.get_port()
             if not verify_gps_connection:
@@ -158,7 +159,7 @@ class ThreadedClient:
         Thread to Check the port connection and the status of the Camera
         every second.
         """
-        while True:
+        while not self.exitFlag:
             self.cameras_state = self.find_cam()
             if not self.cameras_state[0]:
                 time.sleep(1)
@@ -264,15 +265,8 @@ def close_application_globally():
     This function close the different threads of the application when
     the user exits the App.    
     """
-    try:
-        client.camera.stop()
-        client.camera1.stop()
-    except AttributeError:
-        print("There is no camera")
-
+    client.exitFlag = True
     client.running = 0
-
-    
     root.destroy()
     sys.exit(1)
 
