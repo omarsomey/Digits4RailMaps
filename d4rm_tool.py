@@ -15,6 +15,7 @@ from FPS import FPS
 from Controller.RecordingThreadController import RecordingThreadController
 from Controller.CamRecordThreadController import CamThreadController
 from Controller.GpsRecordThreadController import GpsThreadController
+from Controller.CamPollingThreadController import CamPollingThreadController
 import cv2
 from GuiPart import GuiPart
 import serial
@@ -31,7 +32,7 @@ import timeit
 import time
 from statistics import mean
 from jproperties import Properties
-
+import set_id as s
 
 
 class ThreadedClient:
@@ -48,20 +49,19 @@ class ThreadedClient:
         the GUI as well.
         """
         self.master = master
-        self.gps_destination_file_name = ""
-        self.frames_destination_timestamp =""
-        self.video_destination_file_handler = cv2.VideoWriter()
-        self.gps_destination_dir = "/home/knorr-bremse/Projects/Digits4RailMaps/icom_track_gui/GPS/"
-        #self.video_destination_dir = "/home/knorr-bremse/Projects/Digits4RailMaps/icom_track_gui/Videos/"
+        self.cam_prop_path = "Properties/cam.properties"
+        self.second_cam_prop_path = "Properties/second-cam.properties"
+        self.gps_prop_path = "Properties/gps.properties"
         self.record= False
         self.img = None
         self.frame = None
         self.frame1 = None
         self.f = 0
         self.check = False
-        self.cam_properties= self.getProperties("Properties/cam.properties")
-        self.second_cam_properties = self.getProperties("Properties/second-cam.properties")
-        self.gps_properties = self.getProperties("Properties/gps.properties")
+        s.setId(self.cam_prop_path, self.second_cam_prop_path, self.gps_prop_path) # set the Id at the beginning of the app 
+        self.cam_properties= self.getProperties(self.cam_prop_path)
+        self.second_cam_properties = self.getProperties(self.second_cam_prop_path)
+        self.gps_properties = self.getProperties(self.gps_prop_path)
 
         self.running = 1
         self.cameras_state = self.find_cam()
@@ -75,10 +75,14 @@ class ThreadedClient:
         if self.cameras_state[0]:
             self.camera = See3Cam(src=self.cameras_state[1], width=1280, height=720, framerate=30, name="cam")
             self.camera.start()
+            self.camPollThread = CamPollingThreadController(self, self.camera, self.gui)
+            self.camPollThread.start()
             self.camThread = CamThreadController(self, self.camera, self.camera.name, self.cam_properties, self.gui)
         if self.cameras_state[2]:
             self.camera1 = See3Cam(src=self.cameras_state[3], width=1280, height=720, framerate=30, name="cam1")
             self.camera1.start()
+            self.camPollThread1 = CamPollingThreadController(self, self.camera1, self.gui)
+            self.camPollThread1.start()
             self.cam1Thread = CamThreadController(self, self.camera1, self.camera1.name, self.second_cam_properties, self.gui)
         if self.verify_gps_connection:
             self.gps = GpsCapture()
@@ -125,9 +129,6 @@ class ThreadedClient:
         if not self.running:
             # This is the brutal stop of the system.
             sys.exit(1)
-        # # Repeat this function every 1 ms 
-        # self.f = self.f+1
-        # print(self.f)
         self.master.after(1, self.periodicCall)
 
     def checkGpsConnection(self, interval = 1):
@@ -137,7 +138,6 @@ class ThreadedClient:
         """
         while True:
             # Get the GPS port connection
-            print(threading.active_count())
             verify_gps_connection, gps_port = self.gps.get_port()
             if not verify_gps_connection:
                 self.gps.running = False
@@ -169,8 +169,7 @@ class ThreadedClient:
 
             time.sleep(interval)
 
-            
- 
+  
 
     def recordData(self):
         """
@@ -179,16 +178,20 @@ class ThreadedClient:
         if self.check:
             if not self.record:
                 self.video_output = False
+                self.camPollThread.stop()
+                self.camPollThread1.stop()
                 self.camThread.start()
                 self.cam1Thread.start()
                 self.gpsThread.start()
                 self.record = True
                 self.gui.btn_record.configure(text="Recording", bg="red")
-                #self.gui.progress_bar.start(int(10000/100)) #  duration of videos in seconds divided by 100
+                self.gui.progress_bar.start(int(10000/100)) #  duration of videos in seconds divided by 100
             else:
                 print("Alreadiy recording")
+                self.gui.notification_label.configure(text="Already recording !")
         else:
             print("Cannot record, There is no device connected !")
+            self.gui.notification_label.configure(text="Cannot record, There is no device connected !")
 
 
     def stopRecord(self):
@@ -200,9 +203,11 @@ class ThreadedClient:
             self.camThread.stop()
             self.cam1Thread.stop()
             self.gpsThread.stop()
+            self.camPollThread.start()
+            self.camPollThread1.start()
             self.record = False
             self.gui.btn_record.configure(text="Record Data", bg="green")
-            #self.gui.progress_bar.stop()
+            self.gui.progress_bar.stop()
         else:
             print("There is no recording")
 
@@ -216,6 +221,7 @@ class ThreadedClient:
                 k, v = line.split("=", 1)
                 props[k] = v
         return props
+     
 
     def find_cam(self):
         camera_indexes =[]

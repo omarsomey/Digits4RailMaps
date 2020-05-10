@@ -104,7 +104,7 @@ class GuiPart:
         self.rightframe.pack_propagate(False)
         self.systemInfo()
         self.recordingButtons()
-        #self.progressBar()
+        self.progressBar()
         
         
 
@@ -159,16 +159,7 @@ class GuiPart:
             self.gps_device_label.configure(text="Connected")
         else:
             self.gps_device_label.configure(text="Disconnected")
-        
-        # # if Both cameras are disconnected
-        # if not camStatus[0] and not camStatus[2]:
-        #     self.notification_label.configure(text="Both cameras are disconnected !", fg="red")
-        
-        # # if one of the cameras is disconnected
-        # if not camStatus[0] or not camStatus[2]:
-        #     self.notification_label.configure(text="One of the cameras is disconnected !", fg="red")
-
-
+            
         # If First Camera connected
         if camStatus[0]:
             self.camera_device_label.configure(text="Connected")

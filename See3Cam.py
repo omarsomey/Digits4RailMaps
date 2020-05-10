@@ -44,6 +44,7 @@ class See3Cam:
 
     def stop(self):
         self.stopped = True
+        self.stream.release()
     
 
     def find_cam(self, cam):
