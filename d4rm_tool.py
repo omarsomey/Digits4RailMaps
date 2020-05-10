@@ -55,8 +55,9 @@ class ThreadedClient:
         self.gps_prop_path = "Properties/gps.properties"
         self.record= False
         self.img = None
-        self.frame = None
-        self.frame1 = None
+        self.camera = None
+        self.camera1 = None
+        self.gps = None
         self.f = 0
         self.check = False
         s.setId(self.cam_prop_path, self.second_cam_prop_path, self.gps_prop_path) # set the Id at the beginning of the app 
@@ -120,11 +121,11 @@ class ThreadedClient:
         send them to GUI part.
         """
 
-        if self.gps.running or self.frame is not None or self.frame1 is not None:
+        if self.gps.running or self.camera.running or self.camera1.running:
             self.check = True
 
         # Update the GUI of the camera and GPS status
-        self.gui.processIncoming(self.cameras_state,  self.gps.running, self.video_output, self.frame, self.frame1)
+        self.gui.processIncoming(self.cameras_state,  self.gps.running, self.video_output)
             
 
         if not self.running:
@@ -179,19 +180,21 @@ class ThreadedClient:
         if self.check:
             if not self.record:
                 self.video_output = False
-                self.camPollThread.stop()
-                self.camPollThread1.stop()
-                self.camThread.start()
-                self.cam1Thread.start()
-                self.gpsThread.start()
+                if self.camera is not None and self.camera.running:
+                    self.camPollThread.stop()
+                    self.camThread.start()
+                if self.camera1 is not None and self.camera1.running:
+                    self.camPollThread1.stop()
+                    self.cam1Thread.start()
+                if self.gps is not None and self.gps.running:
+                    self.gpsThread.start()
                 self.record = True
                 self.gui.btn_record.configure(text="Recording", bg="red")
+                self.gui.notification_label.configure(text="Recording in Progress")
                 self.gui.progress_bar.start(int(10000/100)) #  duration of videos in seconds divided by 100
             else:
-                print("Alreadiy recording")
                 self.gui.notification_label.configure(text="Already recording !")
         else:
-            print("Cannot record, There is no device connected !")
             self.gui.notification_label.configure(text="Cannot record, There is no device connected !")
 
 
@@ -200,17 +203,21 @@ class ThreadedClient:
         This function listens to the record button and starts the recording thread accordingly
         """
         if self.record:
+            self.gui.notification_label.configure(text="Recording Stopped")
             self.video_output = True
-            self.camThread.stop()
-            self.cam1Thread.stop()
-            self.gpsThread.stop()
-            self.camPollThread.start()
-            self.camPollThread1.start()
+            if self.camera is not None and self.camera.running:    
+                self.camThread.stop()
+                self.camPollThread.start()
+            if self.camera1 is not None and self.camera1.running:
+                self.cam1Thread.stop()
+                self.camPollThread1.start()
+            if self.gps is not None and self.gps.running:
+                self.gpsThread.stop()
             self.record = False
             self.gui.btn_record.configure(text="Record Data", bg="green")
             self.gui.progress_bar.stop()
         else:
-            print("There is no recording")
+            self.gui.notification_label.configure(text="Can't stop, there is no recording !")
 
     def getProperties(self, path):
         props = {}
@@ -266,6 +273,22 @@ def close_application_globally():
     the user exits the App.    
     """
     client.exitFlag = True
+    if client.camera is not None and client.camera.running:
+        if client.record:  
+            client.camThread.stop()
+        else:
+            client.camPollThread.stop()
+        client.camera.stop()
+    if client.camera1 is not None and client.camera1.running:
+        if client.record:
+            client.cam1Thread.stop()
+        else:
+            client.camPollThread1.stop()
+        client.camera1.stop()
+    if client.gps is not None and client.gps.running:
+        if client.record:
+            client.gpsThread.stop()
+        client.gps.stop()
     client.running = 0
     root.destroy()
     sys.exit(1)

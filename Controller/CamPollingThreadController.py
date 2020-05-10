@@ -38,6 +38,8 @@ class CamPollingThreadController:
 			if np.array_equal(self.f, frame) and frame is None:
 				continue
 			self.f = frame
+			if frame is None:
+				print("frame none")
 			self.photo = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 			self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.photo)) # Transform the frame into PIL image
 			if self.label == 1:

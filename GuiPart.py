@@ -151,7 +151,7 @@ class GuiPart:
     #     self.second_canvas = self.canvas1.create_text(0,0, font="Times 20 italic bold", text="  Camera Not Connected !", anchor = tkinter.NW)
 
 
-    def processIncoming(self,camStatus, gpsStatus, videoOutput, frame, frame1):
+    def processIncoming(self,camStatus, gpsStatus, videoOutput):
         """Handle the Status of the devices every 1 ms"""
         
         # If GPS connected
@@ -159,6 +159,21 @@ class GuiPart:
             self.gps_device_label.configure(text="Connected")
         else:
             self.gps_device_label.configure(text="Disconnected")
+        if camStatus[0]:
+            self.camera_device_label.configure(text="Connected")
+        else:
+            self.camera_device_label.configure(text="Disconnected")
+
+        if camStatus[2]:
+            self.camera1_device_label.configure(text="Connected")
+        else:
+            self.camera1_device_label.configure(text="Disconnected")
+
+        if not videoOutput:
+            self.videoframe1.configure(text="Recording in progress, Can't show the video stream")
+            self.videoframe2.configure(text="Recording in progress, Can't show the video stream")
+
+
 
             
         # # If First Camera connected
