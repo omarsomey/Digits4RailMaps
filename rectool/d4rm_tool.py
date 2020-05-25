@@ -257,36 +257,39 @@ class ThreadedClient:
         return (False, None)
     
 
+def main():
+    rand = random.Random()
+    root = tkinter.Tk()
+    client = ThreadedClient(root)
 
-rand = random.Random()
-root = tkinter.Tk()
-client = ThreadedClient(root)
+    def close_application_globally():
+        """
+        This function close the different threads of the application when
+        the user exits the App.    
+        """
+        client.exitFlag = True
+        if client.camera is not None and client.camera.running:
+            if client.record:  
+                client.camThread.stop()
+            else:
+                client.camPollThread.stop()
+            client.camera.stop()
+        if client.camera1 is not None and client.camera1.running:
+            if client.record:
+                client.cam1Thread.stop()
+            else:
+                client.camPollThread1.stop()
+            client.camera1.stop()
+        if client.gps is not None and client.gps.running:
+            if client.record:
+                client.gpsThread.stop()
+            client.gps.stop()
+        client.running = 0
+        root.destroy()
+        sys.exit(1)
 
-def close_application_globally():
-    """
-    This function close the different threads of the application when
-    the user exits the App.    
-    """
-    client.exitFlag = True
-    if client.camera is not None and client.camera.running:
-        if client.record:  
-            client.camThread.stop()
-        else:
-            client.camPollThread.stop()
-        client.camera.stop()
-    if client.camera1 is not None and client.camera1.running:
-        if client.record:
-            client.cam1Thread.stop()
-        else:
-            client.camPollThread1.stop()
-        client.camera1.stop()
-    if client.gps is not None and client.gps.running:
-        if client.record:
-            client.gpsThread.stop()
-        client.gps.stop()
-    client.running = 0
-    root.destroy()
-    sys.exit(1)
+    root.protocol("WM_DELETE_WINDOW", close_application_globally)
+    root.mainloop()
 
-root.protocol("WM_DELETE_WINDOW", close_application_globally)
-root.mainloop()
+if __name__ == "__main__":
+    main()
