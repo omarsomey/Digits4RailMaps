@@ -106,9 +106,6 @@ class ThreadedClient:
         camera_controller.start()
 
 
-
-
-        self.video_output = True
         # Start the periodic call in the GUI .
 
         self.periodicCall()
@@ -125,7 +122,7 @@ class ThreadedClient:
             self.check = True
 
         # Update the GUI of the camera and GPS status
-        self.gui.processIncoming(self.cameras_state,  self.gps.running, self.video_output)
+        self.gui.processIncoming(self.cameras_state,  self.gps.running, self.record)
             
 
         if not self.running:
@@ -179,7 +176,6 @@ class ThreadedClient:
         """
         if self.check:
             if not self.record:
-                self.video_output = False
                 if self.camera is not None and self.camera.running:
                     self.camPollThread.stop()
                     self.camThread.start()
@@ -204,7 +200,6 @@ class ThreadedClient:
         """
         if self.record:
             self.gui.notification_label.configure(text="Recording Stopped")
-            self.video_output = True
             if self.camera is not None and self.camera.running:    
                 self.camThread.stop()
                 self.camPollThread.start()

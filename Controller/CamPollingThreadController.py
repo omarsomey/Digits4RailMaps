@@ -33,21 +33,21 @@ class CamPollingThreadController:
 		self.f = None
 	
 	def displayFrames(self):
+		self.gui.canvas.delete(self.gui.first_canvas)
+		self.gui.canvas1.delete(self.gui.second_canvas)
 		while not self.stop_display_thread.is_set() and not self.client.exitFlag:
 			ret, frame = self.cam.read()
 			if np.array_equal(self.f, frame) and frame is None:
 				continue
 			self.f = frame
-			if frame is None:
-				print("frame none")
 			self.photo = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 			self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.photo)) # Transform the frame into PIL image
 			if self.label == 1:
-				self.gui.videoframe1.configure(image=self.photo)
-				self.gui.videoframe1.image = self.photo
+				self.gui.first_canvas = self.gui.canvas.create_image(0, 0, image = self.photo, anchor = tkinter.NW)
+				self.gui.videoframe.image = self.photo
 			if self.label == 2:
-				self.gui.videoframe2.configure(image=self.photo)
-				self.gui.videoframe2.image = self.photo
+				self.gui.second_canvas = self.gui.canvas1.create_image(0, 0, image = self.photo, anchor = tkinter.NW)
+				self.gui.videoframe1.image = self.photo
 				
 
 	def start(self):

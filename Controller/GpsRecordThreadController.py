@@ -38,7 +38,6 @@ class GpsThreadController:
 			[str] -- video file name.
 		"""
 		gps_filename = gpsDirectory + "track_gps_" + id + "_" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".csv"
-		print(gps_filename)
 		self.gps_recorder = open(gps_filename, 'a')
 		self.gps_recorder.write("sentence_identifier,time,latitude,latitude_direction,longitude,longitude_direction,quality,hdop,altitude,altitude_unit,undulation,u_unit,age,checksum,timestamp,frames_id\n")
 		self.gps_recorder.close()
