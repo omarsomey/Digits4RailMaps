@@ -1,5 +1,0 @@
-{
-    "python.pythonPath": "/home/knorr-bremse/anaconda3/envs/rec-tool/bin/python",
-    "python.linting.pylintEnabled": true,
-    "python.linting.enabled": false
-}
