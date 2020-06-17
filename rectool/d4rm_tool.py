@@ -69,7 +69,7 @@ class ThreadedClient:
         self.cameras_state = self.find_cam()
         self.verify_gps_connection, self.gps_port = self.find_gps()
         print(self.cameras_state)
-        print(self.verify_gps_connection)
+        print(self.verify_gps_connection, self.gps_port)
 
         # Set up the GUI part
         self.gui = GuiPart(master, self, self.cameras_state, self.verify_gps_connection, self.recordData, self.stopRecord)
@@ -118,11 +118,12 @@ class ThreadedClient:
         send them to GUI part.
         """
 
-        if self.gps.running or self.camera.running or self.camera1.running:
+        
+        if self.gps is not None or self.camera is not None or self.camera1 is not None:
             self.check = True
 
         # Update the GUI of the camera and GPS status
-        self.gui.processIncoming(self.cameras_state,  self.gps.running, self.record)
+        self.gui.processIncoming(self.cameras_state,  self.verify_gps_connection, self.record)
             
 
         if not self.running:
@@ -137,16 +138,16 @@ class ThreadedClient:
         """
         while not self.exitFlag:
             # Get the GPS port connection
-            verify_gps_connection, gps_port = self.gps.get_port()
-            if not verify_gps_connection:
-                self.gps.running = False
-                self.gps.isConnected = False
-            elif not self.gps.running:
-                self.gps.running = False
-                self.gps.open_gps(gps_port,self.gps.baudrate)
-            else:
-                self.gps.running = True
-                self.gps.isConnected = True
+            self.verify_gps_connection, self.gps_port = self.find_gps()
+            # if not verify_gps_connection:
+            #     self.gps.running = False
+            #     self.gps.isConnected = False
+            # elif not self.gps.running:
+            #     self.gps.running = False
+            #     self.gps.open_gps(gps_port,self.gps.baudrate)
+            # else:
+            #     self.gps.running = True
+            #     self.gps.isConnected = True
 
             time.sleep(interval)
             
