@@ -1,7 +1,7 @@
 import tkinter
 from tkinter import ttk
 from tkinter import Tk, W, E, Frame
-from tkinter import Button, Entry, Label, LabelFrame
+from tkinter import Button, Entry, Label, LabelFrame, StringVar
 from tkinter import IntVar
 from queue import Queue
 import PIL.Image, PIL.ImageTk
@@ -9,6 +9,8 @@ import PIL
 from PIL import Image
 from PIL import ImageTk
 import cv2
+import shutil
+
 
 
 
@@ -17,7 +19,7 @@ class GuiPart:
     Independent  class responsible for the GUI part of the tool
     """
 
-    def __init__(self, master, client, camStatus, gpsStatus, recordData, stopRecord):
+    def __init__(self, master, client, camStatus, gpsStatus, recordData):
 
         """
         Set up of the GUI, creation of the different frames
@@ -50,7 +52,7 @@ class GuiPart:
         self.video_tab = ttk.Frame(self.tab_parent)
 
         self.tab_parent.add(self.recording_tab, text="Data recording",)
-        self.tab_parent.add(self.video_tab, text="Video Output")
+        self.tab_parent.add(self.video_tab, text="Video Preview")
         self.tab_parent.pack(expand=1, fill='both')
 
 
@@ -65,12 +67,12 @@ class GuiPart:
         #welcome text
         self.topframe = Frame(self.recording_tab, borderwidth=5, relief=tkinter.GROOVE)
         self.topframe.pack(side = tkinter.TOP)
-        self.welcome_text = tkinter.Label(self.topframe, text="D4RM synchronising tool", font=("Arial Bold", 20))
+        self.welcome_text = tkinter.Label(self.topframe, text="Digits4RailMaps Recording Tool", font=("Arial Bold", 30))
         self.welcome_text.pack(side = tkinter.TOP)
         
     def leftFrame(self):
-        self.leftframe = LabelFrame(self.recording_tab, text="Input devices and settings", font=("Arial Bold", 15), height=800, width=500, borderwidth=5, relief=tkinter.GROOVE)
-        self.leftframe.pack(side = tkinter.LEFT)
+        self.leftframe = LabelFrame(self.recording_tab, text="Connection Status", font=("Arial Bold", 20), height=800, width=100, borderwidth=5, relief=tkinter.GROOVE)
+        self.leftframe.pack(side = tkinter.LEFT, fill="both", expand="yes")
         self.leftframe.pack_propagate(False)
         self.cameraLabel()
         self.gpsLabel()
@@ -78,55 +80,93 @@ class GuiPart:
     
     def cameraLabel(self):
         # First camera Label
-        self.camera_status_label = tkinter.Label(self.leftframe, text="First Cameras Status", font=("Arial Bold", 15), padx=15, pady=15)
-        self.camera_status_label.pack()
+        self.camera_status_label = tkinter.Label(self.leftframe, text="Camera 1", font=("Arial Bold", 15), padx=15, pady=15)
+        self.camera_status_label.pack(fill=tkinter.X)
 
         self.camera_device_label = tkinter.Label(self.leftframe, text="Unknown", font=("Arial Bold", 20),padx=5, pady=15)
-        self.camera_device_label.pack()
+        self.camera_device_label.pack(fill=tkinter.X)
 
         # Second camera label
-        self.camera_status_label = tkinter.Label(self.leftframe, text="Second Cameras Status", font=("Arial Bold", 15), padx=15, pady=15)
-        self.camera_status_label.pack()
+        self.camera1_status_label = tkinter.Label(self.leftframe, text="Camera 2", font=("Arial Bold", 15), padx=15, pady=15)
+        self.camera1_status_label.pack(fill=tkinter.X)
 
         self.camera1_device_label = tkinter.Label(self.leftframe, text="Unknown", font=("Arial Bold", 20),padx=5, pady=15)
-        self.camera1_device_label.pack()
+        self.camera1_device_label.pack(fill=tkinter.X)
 
 
     def gpsLabel(self):
-        self.gps_status_label = tkinter.Label(self.leftframe, text="GPS Status", font=("Arial Bold", 15), padx=15, pady=15)
-        self.gps_status_label.pack()
+        self.gps_status_label = tkinter.Label(self.leftframe, text="GPS", font=("Arial Bold", 15), padx=15, pady=15)
+        self.gps_status_label.pack(fill=tkinter.X)
         
         self.gps_device_label = tkinter.Label(self.leftframe, text="Unknown", font=("Arial Bold", 20),padx=5, pady=15)
-        self.gps_device_label.pack()
+        self.gps_device_label.pack(fill=tkinter.X)
     
     def rightFrame(self):
-        self.rightframe = LabelFrame(self.recording_tab, text="System informations", font=("Arial Bold", 15), height=800, width=1300, borderwidth=5, relief=tkinter.GROOVE)
-        self.rightframe.pack(side = tkinter.LEFT)
+        self.rightframe = LabelFrame(self.recording_tab, text="Recording Tab", font=("Arial Bold", 20), height=800, width=1300, borderwidth=5, relief=tkinter.GROOVE)
+        self.rightframe.pack(side = tkinter.LEFT, fill="both", expand="yes")
         self.rightframe.pack_propagate(False)
+        self.rightframe.grid_columnconfigure(1, weight=1)
+        self.rightframe.grid_columnconfigure(0, weight=1)
+        self.recordingTitle()
+        self.recordingLocation()
+        self.memoryBar()
         self.systemInfo()
-        self.recordingButtons()
         self.progressBar()
+        self.recordingButtons()
+        
         
         
 
+    def recordingTitle(self):
+        self.recording_label = tkinter.Label(self.rightframe, text="Recording Title", font=("Arial Bold", 20),padx=20, pady=15)
+        self.recording_label.grid(row=0, sticky=W)
+        self.title = StringVar()
+        self.e = ttk.Entry(self.rightframe, textvariable=self.title, width=80)
+        self.e.grid(row=1, ipady=5, sticky=W, pady=20, padx=20, columnspan=2)
+
+
+    def recordingLocation(self):
+        self.location_label = tkinter.Label(self.rightframe, text="Recording Location :", font=("Arial Bold", 20),padx=20, pady=15)
+        self.location_label.grid(row=3, sticky=W)
+        self.btn_record = tkinter.Button(self.rightframe, text="Browse Directory", command=self.client.browseDirectory, font=("Arial Bold", 15))
+        self.btn_record.grid(row=3, column=1, sticky=W, pady=0, padx=20)
+        self.location = tkinter.Label(self.rightframe, text=self.client.directory, font=("Arial Bold", 15), padx=5, pady=15)
+        self.location.grid(row=4, column=0, columnspan=2, sticky=W, padx=20)
+
+
+
+    def memoryBar(self):
+        total, used, free = shutil.disk_usage("/")
+        maxValue = (total // (2**30))
+        currentValue = (used // (2**30))
+        freeSpace = (free // (2**30))
+        self.memory_bar = ttk.Progressbar(self.rightframe, orient='horizontal', length = maxValue, mode='determinate')
+        self.memory_bar.grid(row=5, sticky=W, pady=20, padx=20)
+        self.memory_bar["value"]=currentValue
+        self.memory_bar["maximum"]=maxValue
+        self.disk_space = tkinter.Label(self.rightframe, text="Free Space: " + str(freeSpace)+"GB", font=("Arial Bold", 15),padx=5, pady=15)
+        self.disk_space.grid(row=5, column=1, sticky=W)
 
     def systemInfo(self):
-        self.notification_label = tkinter.Label(self.rightframe, text="Unknown", font=("Arial Bold", 20),padx=5, pady=15)
-        self.notification_label.pack(anchor=tkinter.S, expand=True)
+        self.status_label = tkinter.Label(self.rightframe, text="Recording Status : ", font=("Arial Bold", 20, 'bold'),padx=20, pady=15)
+        self.status_label.grid(row=7, sticky=W)
+        self.notification_label = tkinter.Label(self.rightframe, text="Ready to Record", font=("Arial Bold", 20,'bold'), fg="red",padx=20, pady=15, width=20, height=2)
+        self.notification_label.grid(row=7, column=1, sticky=W, columnspan=2)
 
 
     def recordingButtons(self):
         # Start recording Button
-        self.btn_record = tkinter.Button(self.rightframe, text="Record Data", command=self.client.recordData, font=("Arial Bold", 20))
-        self.btn_record.pack(anchor=tkinter.S, expand=True)
+
+        self.btn_record = tkinter.Button(self.rightframe, text="Record Data", command=self.client.recordData, font=("Arial Bold", 20), height=3, width=25)
+        self.btn_record.grid(row=10, sticky=W, pady=20, padx=20)
         # Stop recording Button
-        self.btn_stop = tkinter.Button(self.rightframe, text="Stop recording", command=self.client.stopRecord, font=("Arial Bold", 20))
-        self.btn_stop.pack(anchor=tkinter.S, expand=True)
+        # self.btn_stop = tkinter.Button(self.rightframe, text="Stop recording", command=self.client.stopRecord, font=("Arial Bold", 20))
+        # self.btn_stop.pack(anchor=tkinter.S, expand=True)
 
     
     def progressBar(self):
         self.progress_bar = ttk.Progressbar(self.rightframe, orient='horizontal', length = 350, mode='determinate')
-        self.progress_bar.pack(anchor=tkinter.S, expand=True)
+        self.progress_bar.grid(row=11, sticky=W, pady=20, padx=20)
 
     
     def videoFrame(self):
@@ -157,27 +197,41 @@ class GuiPart:
     def processIncoming(self,camStatus, gpsStatus, record):
         """Handle the Status of the devices every 1 ms"""
         
+        self.location.configure(text=self.client.directory)
+        total, used, free = shutil.disk_usage("/")
+        self.total = (total // (2**30))
+        self.used = (used // (2**30))
+        self.free = (free // (2**30))
+        self.memory_bar["value"]= self.used
+        self.memory_bar["maximum"]= self.total
+        self.disk_space.configure(text="Free Space: "+ str(self.free)+"GB")
         # If GPS connected
         if gpsStatus:
-            self.gps_device_label.configure(text="Connected")
+            self.gps_device_label.configure(text="Connected", bg="green")
+            self.gps_status_label.configure(bg="green")
         else:
-            self.gps_device_label.configure(text="Disconnected")
+            self.gps_device_label.configure(text="Disconnected", bg="red")
+            self.gps_status_label.configure(bg="red")
         if camStatus[0]:
-            self.camera_device_label.configure(text="Connected")
+            self.camera_device_label.configure(text="Connected", bg="green")
+            self.camera_status_label.configure(bg="green")
             if record:
                 self.canvas.delete(self.first_canvas)
                 self.first_canvas = self.canvas.create_text(0,0, font="Times 20 italic bold", text=" Recording in progress, Can't show the video stream !", anchor = tkinter.NW)
         else:
-            self.camera_device_label.configure(text="Disconnected")
+            self.camera_status_label.configure(bg="red")
+            self.camera_device_label.configure(text="Disconnected", bg="red")
             self.canvas.delete(self.first_canvas)
             self.first_canvas = self.canvas.create_text(0,0, font="Times 20 italic bold", text=" Camera Disconnected", anchor = tkinter.NW)
 
         if camStatus[2]:
-            self.camera1_device_label.configure(text="Connected")
+            self.camera1_device_label.configure(text="Connected", bg="green")
+            self.camera1_status_label.configure(bg="green")
             if record:
                 self.canvas1.delete(self.second_canvas)
                 self.second_canvas = self.canvas1.create_text(0,0, font="Times 20 italic bold", text=" Recording in progress, Can't show the video stream !", anchor = tkinter.NW)
         else:
-            self.camera1_device_label.configure(text="Disconnected")
+            self.camera1_status_label.configure(bg="red")
+            self.camera1_device_label.configure(text="Disconnected", bg="red")
             self.canvas1.delete(self.second_canvas)
             self.second_canvas = self.canvas1.create_text(0,0, font="Times 20 italic bold", text=" Camera Disconnected", anchor = tkinter.NW)

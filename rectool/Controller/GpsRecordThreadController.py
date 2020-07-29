@@ -8,7 +8,7 @@ from jproperties import Properties
 class GpsThreadController:
 	"""Separate Thread Class responsible of the files recording
 	"""
-	def __init__(self, client, gps, properties, gui):
+	def __init__(self, client, gps, gui):
 		"""Constructor
 		
 		Arguments:
@@ -17,12 +17,10 @@ class GpsThreadController:
 		"""
 		self.client = client
 		self.gps = gps
-		self.properties = properties
 		self.gui = gui
-		self.properties_path = self.properties['properties-path']
-		self.gps_path = self.properties['gps-path']
-		self.gps_id = self.properties['gps-id']
-		self.duration = self.properties['duration']
+		self.gps_path = self.client.directory
+		self.gps_id = 0
+		self.duration = 10
 		self.record_thread = None
 		self.stop_record_thread = threading.Event()
 
@@ -37,7 +35,7 @@ class GpsThreadController:
 			[str] -- frames file name.
 			[str] -- video file name.
 		"""
-		gps_filename = gpsDirectory + "track_gps_" + id + "_" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".csv"
+		gps_filename = gpsDirectory + "track_gps_" + str(id) + "_" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".csv"
 		self.gps_recorder = open(gps_filename, 'a')
 		self.gps_recorder.write("sentence_identifier,time,latitude,latitude_direction,longitude,longitude_direction,quality,hdop,altitude,altitude_unit,undulation,u_unit,age,checksum,timestamp,frames_id\n")
 		self.gps_recorder.close()
@@ -68,15 +66,15 @@ class GpsThreadController:
 		"""This function is the main thread 
 		"""
 		start = time.time()
-		id = self.getId()
+		id = 0
 		frame_id = 0
-		gps_filename = self.getNewFiles(self.gps_path, id)
+		gps_filename = self.getNewFiles(self.client.directory, id)
 		while  not self.stop_record_thread.is_set() and not self.client.exitFlag:
 			self.gpsSentence = self.gps.read()
 			currentTime = time.time()
 			if(int(currentTime-start) >= int(self.duration)):
-				id = self.getId()
-				gps_filename = self.getNewFiles(self.gps_path, id)
+				id = id +1
+				gps_filename = self.getNewFiles(self.client.directory, id)
 				frame_id = 0
 				start = time.time()
 			self.openfiles(gps_filename)
@@ -105,22 +103,3 @@ class GpsThreadController:
 			[bool] -- Thread running: True, Thread stopped: False
 		"""
 		return self.record_thread.isAlive()
-
-	def getId(self):
-		"""Function to get a new ID each time a file is created
-		
-		Returns:
-			[integer] -- ID
-		"""
-		# Read last availaible id 
-		p = Properties()
-		with open(self.properties_path, 'rb') as f:
-			p.load(f, 'utf-8')
-		id = str(int(p["gps-id"].data))
-		# Increment the id in the file
-		p["gps-id"]=str(int(p["gps-id"].data) +1)
-		with open(self.properties_path, 'wb') as f:
-			p.store(f, encoding="utf-8")
-
-		# Return availaible id
-		return id

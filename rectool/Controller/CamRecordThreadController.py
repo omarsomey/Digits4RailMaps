@@ -10,7 +10,7 @@ from FPS import FPS
 class CamThreadController:
 	"""Separate Thread Class responsible of the files recording
 	"""
-	def __init__(self, client, cam, name, properties, gui):
+	def __init__(self, client, cam, name, gui):
 		"""Constructor
 		
 		Arguments:
@@ -20,12 +20,9 @@ class CamThreadController:
 		self.client = client
 		self.cam = cam
 		self.name = name
-		self.properties = properties
 		self.gui = gui
-		self.properties_path = self.properties['properties-path']
-		self.video_path = self.properties['video-path']
-		self.video_id = self.properties['video-id']
-		self.duration = self.properties['duration']
+		self.video_path = self.client.directory
+		self.duration = 10
 		self.video_handler = cv2.VideoWriter()
 		self.record_thread = None
 		self.stop_record_thread = threading.Event()
@@ -44,11 +41,11 @@ class CamThreadController:
 			[str] -- frames file name.
 			[str] -- video file name.
 		"""
-		frames_filename = videoDirectory + "track_frames_" + self.name +"_"+ id +"_"+ time.strftime("%d-%m-%Y-%H-%M-%S") + ".csv"
+		frames_filename = videoDirectory + "track_frames_" + self.name +"_"+ str(id) +"_"+ time.strftime("%d-%m-%Y-%H-%M-%S") + ".csv"
 		self.frames_recorder = open(frames_filename, 'a')
 		self.frames_recorder.write("frames_id,frames_timestamp \n")
 		self.frames_recorder.close()
-		video_filename = videoDirectory + "track_video_"+ self.name +"_" + id +"_" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".avi"
+		video_filename = videoDirectory + "track_video_"+ self.name +"_" + str(id) +"_" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".avi"
 		self.video_handler.open(video_filename, self.fourcc_codec, 30, (self.client.camera.width,self.client.camera.height))
 		return  frames_filename, video_filename
 
@@ -79,9 +76,9 @@ class CamThreadController:
 		"""
 		self.fps.start()
 		start = time.time()
-		id = self.getId()
+		id = 0
 		frame_id = 0
-		frames_filename, video_filename = self.getNewFiles(self.video_path, id, self.cam)
+		frames_filename, video_filename = self.getNewFiles(self.client.directory, id, self.cam)
 		while  not self.stop_record_thread.is_set() and not self.client.exitFlag:
 			ret, frame = self.cam.read()
 			if np.array_equal(self.f, frame):
@@ -93,8 +90,8 @@ class CamThreadController:
 				self.fps.stop()
 				print("[INFO] elapsed time: {:.2f}".format(self.fps.elapsed()))
 				print("[INFO] approx. FPS: {:.2f}".format(self.fps.fps()))
-				id = self.getId()
-				frames_filename, video_filename = self.getNewFiles(self.video_path, id, self.name)
+				id = id +1
+				frames_filename, video_filename = self.getNewFiles(self.client.directory, id, self.name)
 				frame_id = 0
 				start = time.time()
 				self.fps.start()
@@ -127,21 +124,3 @@ class CamThreadController:
 		"""
 		return self.record_thread.isAlive()
 
-	def getId(self):
-		"""Function to get a new ID each time a file is created
-		
-		Returns:
-			[integer] -- ID
-		"""
-		# Read last availaible id 
-		p = Properties()
-		with open(self.properties_path, 'rb') as f:
-			p.load(f, 'utf-8')
-		id = str(int(p["video-id"].data))
-		# Increment the id in the file
-		p["video-id"]=str(int(p["video-id"].data) +1)
-		with open(self.properties_path, 'wb') as f:
-			p.store(f, encoding="utf-8")
-
-		# Return availaible id
-		return id

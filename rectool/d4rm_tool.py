@@ -5,6 +5,7 @@ import datetime
 import threading
 import multiprocessing
 import random
+from tkinter import filedialog
 from queue import Queue
 import os
 import sys
@@ -50,21 +51,13 @@ class ThreadedClient:
         """
         self.master = master
         self.exitFlag = False ## Flag to terminate all the threads 
-        self.cam_prop_path = "Properties/cam.properties"
-        self.second_cam_prop_path = "Properties/second-cam.properties"
-        self.gps_prop_path = "Properties/gps.properties"
+        self.directory = "/home/knorr-bremse/"
         self.record= False
         self.img = None
         self.camera = None
         self.camera1 = None
         self.gps = None
-        self.f = 0
         self.check = False
-        s.setId(self.cam_prop_path, self.second_cam_prop_path, self.gps_prop_path) # set the Id at the beginning of the app 
-        self.cam_properties= self.getProperties(self.cam_prop_path)
-        self.second_cam_properties = self.getProperties(self.second_cam_prop_path)
-        self.gps_properties = self.getProperties(self.gps_prop_path)
-
         self.running = 1
         self.cameras_state = self.find_cam()
         self.verify_gps_connection, self.gps_port = self.find_gps()
@@ -72,24 +65,24 @@ class ThreadedClient:
         print(self.verify_gps_connection, self.gps_port)
 
         # Set up the GUI part
-        self.gui = GuiPart(master, self, self.cameras_state, self.verify_gps_connection, self.recordData, self.stopRecord)
+        self.gui = GuiPart(master, self, self.cameras_state, self.verify_gps_connection, self.recordData)
 
         if self.cameras_state[0]:
             self.camera = See3Cam(src=self.cameras_state[1], width=1280, height=720, framerate=30, name="cam")
             self.camera.start()
             self.camPollThread = CamPollingThreadController(self, self.camera, self.gui, 1)
             self.camPollThread.start()
-            self.camThread = CamThreadController(self, self.camera, self.camera.name, self.cam_properties, self.gui)
+            self.camThread = CamThreadController(self, self.camera, self.camera.name, self.gui)
         if self.cameras_state[2]:
             self.camera1 = See3Cam(src=self.cameras_state[3], width=1280, height=720, framerate=30, name="cam1")
             self.camera1.start()
             self.camPollThread1 = CamPollingThreadController(self, self.camera1, self.gui, 2)
             self.camPollThread1.start()
-            self.cam1Thread = CamThreadController(self, self.camera1, self.camera1.name, self.second_cam_properties, self.gui)
+            self.cam1Thread = CamThreadController(self, self.camera1, self.camera1.name, self.gui)
         if self.verify_gps_connection:
             self.gps = GpsCapture()
             self.gps.start()
-            self.gpsThread = GpsThreadController(self, self.gps, self.gps_properties, self.gui)
+            self.gpsThread = GpsThreadController(self, self.gps, self.gui)
 
 
         self.fps = FPS()
@@ -117,10 +110,10 @@ class ThreadedClient:
         Check every 1 ms the connection to the GPS system and camera and 
         send them to GUI part.
         """
-
-        
-        if self.gps is not None or self.camera is not None or self.camera1 is not None:
+        if (self.verify_gps_connection and self.gps is not None) or self.camera is not None or self.camera1 is not None:
             self.check = True
+        else:
+            self.check = False
 
         # Update the GUI of the camera and GPS status
         self.gui.processIncoming(self.cameras_state,  self.verify_gps_connection, self.record)
@@ -129,7 +122,7 @@ class ThreadedClient:
         if not self.running:
             # This is the brutal stop of the system.
             sys.exit(1)
-        self.master.after(1, self.periodicCall)
+        self.master.after(15, self.periodicCall)
 
     def checkGpsConnection(self, interval = 1):
         """
@@ -169,7 +162,10 @@ class ThreadedClient:
 
             time.sleep(interval)
 
-  
+    
+    def browseDirectory(self):
+        self.directory = filedialog.askdirectory() +"/"
+        print(self.directory)
 
     def recordData(self):
         """
@@ -186,45 +182,47 @@ class ThreadedClient:
                 if self.gps is not None and self.gps.running:
                     self.gpsThread.start()
                 self.record = True
-                self.gui.btn_record.configure(text="Recording", bg="red")
+                self.gui.btn_record.configure(text="Stop", bg="red")
                 self.gui.notification_label.configure(text="Recording in Progress")
                 self.gui.progress_bar.start(int(10000/100)) #  duration of videos in seconds divided by 100
             else:
-                self.gui.notification_label.configure(text="Already recording !")
+                self.gui.notification_label.configure(text="Recording Stopped")
+                if self.camera is not None and self.camera.running:    
+                    self.camThread.stop()
+                    self.camPollThread.start()
+                if self.camera1 is not None and self.camera1.running:
+                    self.cam1Thread.stop()
+                    self.camPollThread1.start()
+                if self.gps is not None and self.gps.running:
+                    self.gpsThread.stop()
+                    self.record = False
+                    self.gui.btn_record.configure(text="Record Data", bg="green")
+                    self.gui.progress_bar.stop()
+
         else:
             self.gui.notification_label.configure(text="Cannot record, There is no device connected !")
 
 
-    def stopRecord(self):
-        """
-        This function listens to the record button and starts the recording thread accordingly
-        """
-        if self.record:
-            self.gui.notification_label.configure(text="Recording Stopped")
-            if self.camera is not None and self.camera.running:    
-                self.camThread.stop()
-                self.camPollThread.start()
-            if self.camera1 is not None and self.camera1.running:
-                self.cam1Thread.stop()
-                self.camPollThread1.start()
-            if self.gps is not None and self.gps.running:
-                self.gpsThread.stop()
-            self.record = False
-            self.gui.btn_record.configure(text="Record Data", bg="green")
-            self.gui.progress_bar.stop()
-        else:
-            self.gui.notification_label.configure(text="Can't stop, there is no recording !")
+    # def stopRecord(self):
+    #     """
+    #     This function listens to the record button and starts the recording thread accordingly
+    #     """
+    #     if self.record:
+    #         self.gui.notification_label.configure(text="Recording Stopped")
+    #         if self.camera is not None and self.camera.running:    
+    #             self.camThread.stop()
+    #             self.camPollThread.start()
+    #         if self.camera1 is not None and self.camera1.running:
+    #             self.cam1Thread.stop()
+    #             self.camPollThread1.start()
+    #         if self.gps is not None and self.gps.running:
+    #             self.gpsThread.stop()
+    #         self.record = False
+    #         self.gui.btn_record.configure(text="Record Data", bg="green")
+    #         self.gui.progress_bar.stop()
+    #     else:
+    #         self.gui.notification_label.configure(text="Can't stop, there is no recording !")
 
-    def getProperties(self, path):
-        props = {}
-        with open(path, 'r') as f:
-            for line in f:
-                line = line.rstrip() #removes trailing whitespace and '\n' chars
-                if "=" not in line: continue #skips blanks and comments w/o =
-                if line.startswith("#"): continue #skips comments which contain =
-                k, v = line.split("=", 1)
-                props[k] = v
-        return props
      
 
     def find_cam(self):
@@ -259,8 +257,8 @@ class ThreadedClient:
     
 
 def main():
-    rand = random.Random()
     root = tkinter.Tk()
+    root.title("Digits4RailMaps Recording Tool")
     client = ThreadedClient(root)
 
     def close_application_globally():
