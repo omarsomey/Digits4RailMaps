@@ -56,6 +56,8 @@ class ThreadedClient:
         self.directory = "/home/knorr-bremse/"
         self.record= False
         self.img = None
+        self.mem = False
+        self.mem1 = False
         self.camera = None
         self.camera1 = None
         self.gps = None
@@ -155,10 +157,19 @@ class ThreadedClient:
         """
         while not self.exitFlag:
             self.cameras_state = self.find_cam()
+            if self.cameras_state[0]:
+                self.mem = True
+            if self.cameras_state[2]:
+                self.mem1 = True
             if not self.cameras_state[0]:
+                if self.mem:
+                    self.alert_popup("Error !", "A camera has been unplugged !", "Please connect the camera again and restart the Tool.")
                 time.sleep(1)
                 continue
             if not self.cameras_state[2]:
+                if self.mem1:
+                    print("D")
+                    self.alert_popup("Error !", "A camera has been unplugged !", "Please connect the camera again and restart the Tool.")
                 time.sleep(1)
                 continue
 
