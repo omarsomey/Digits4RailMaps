@@ -118,15 +118,15 @@ class GuiPart:
         
 
     def recordingTitle(self):
-        self.recording_label = tkinter.Label(self.rightframe, text="Recording Title", font=("Arial Bold", 20),padx=20, pady=15)
+        self.recording_label = tkinter.Label(self.rightframe, text="Recording Title", font=("Arial Bold", 20, 'bold'),padx=20, pady=15)
         self.recording_label.grid(row=0, sticky=W)
         self.title = StringVar()
-        self.e = ttk.Entry(self.rightframe, textvariable=self.title, width=80)
+        self.e = ttk.Entry(self.rightframe, textvariable=self.title, width=80, font=("Arial Bold", 15))
         self.e.grid(row=1, ipady=5, sticky=W, pady=20, padx=20, columnspan=2)
 
 
     def recordingLocation(self):
-        self.location_label = tkinter.Label(self.rightframe, text="Recording Location :", font=("Arial Bold", 20),padx=20, pady=15)
+        self.location_label = tkinter.Label(self.rightframe, text="Recording Location :", font=("Arial Bold", 20,'bold'),padx=20, pady=15)
         self.location_label.grid(row=3, sticky=W)
         self.btn_record = tkinter.Button(self.rightframe, text="Browse Directory", command=self.client.browseDirectory, font=("Arial Bold", 15))
         self.btn_record.grid(row=3, column=1, sticky=W, pady=0, padx=20)
@@ -140,17 +140,17 @@ class GuiPart:
         maxValue = (total // (2**30))
         currentValue = (used // (2**30))
         freeSpace = (free // (2**30))
-        self.memory_bar = ttk.Progressbar(self.rightframe, orient='horizontal', length = maxValue, mode='determinate')
+        self.memory_bar = ttk.Progressbar(self.rightframe, orient='horizontal', length = 500, mode='determinate')
         self.memory_bar.grid(row=5, sticky=W, pady=20, padx=20)
         self.memory_bar["value"]=currentValue
         self.memory_bar["maximum"]=maxValue
-        self.disk_space = tkinter.Label(self.rightframe, text="Free Space: " + str(freeSpace)+"GB", font=("Arial Bold", 15),padx=5, pady=15)
-        self.disk_space.grid(row=5, column=1, sticky=W)
+        self.disk_space = tkinter.Label(self.rightframe, text="Free Space: " + str(freeSpace)+"GB", font=("Arial Bold", 15),padx=5, pady=15, width=20, height=2, anchor="e")
+        self.disk_space.grid(row=5, column=1, sticky=W, columnspan=2)
 
     def systemInfo(self):
         self.status_label = tkinter.Label(self.rightframe, text="Recording Status : ", font=("Arial Bold", 20, 'bold'),padx=20, pady=15)
         self.status_label.grid(row=7, sticky=W)
-        self.notification_label = tkinter.Label(self.rightframe, text="Ready to Record", font=("Arial Bold", 20,'bold'), fg="red",padx=20, pady=15, width=20, height=2)
+        self.notification_label = tkinter.Label(self.rightframe, text="Ready to Record", font=("Arial Bold", 18,'bold'), fg="red",padx=5, pady=15, width=20, height=4)
         self.notification_label.grid(row=7, column=1, sticky=W, columnspan=2)
 
 
@@ -165,7 +165,7 @@ class GuiPart:
 
     
     def progressBar(self):
-        self.progress_bar = ttk.Progressbar(self.rightframe, orient='horizontal', length = 350, mode='determinate')
+        self.progress_bar = ttk.Progressbar(self.rightframe, orient='horizontal', length = 500, mode='determinate')
         self.progress_bar.grid(row=11, sticky=W, pady=20, padx=20)
 
     

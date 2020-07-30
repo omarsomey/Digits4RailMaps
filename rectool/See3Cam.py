@@ -10,9 +10,10 @@ from queue import Queue
 
 class See3Cam:
     
-    def __init__(self, src, width, height, framerate, name):
+    def __init__(self, src, width, height, framerate, name, label):
         self.src = src
         self.name = name
+        self.label = label
         self.width = width
         self.height = height
         self.framerate = framerate

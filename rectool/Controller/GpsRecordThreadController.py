@@ -68,13 +68,13 @@ class GpsThreadController:
 		start = time.time()
 		id = 0
 		frame_id = 0
-		gps_filename = self.getNewFiles(self.client.directory, id)
+		gps_filename = self.getNewFiles(self.client.directory + "/" + self.client.dirname +"/GPS/", id)
 		while  not self.stop_record_thread.is_set() and not self.client.exitFlag:
 			self.gpsSentence = self.gps.read()
 			currentTime = time.time()
 			if(int(currentTime-start) >= int(self.duration)):
 				id = id +1
-				gps_filename = self.getNewFiles(self.client.directory, id)
+				gps_filename = self.getNewFiles(self.client.directory + "/" + self.client.dirname + "/GPS/", id)
 				frame_id = 0
 				start = time.time()
 			self.openfiles(gps_filename)

@@ -1,4 +1,7 @@
 import tkinter
+from tkinter import ttk
+from tkinter import Tk, W, E, Frame
+from tkinter import Button, Entry, Label, LabelFrame, StringVar
 import time
 import timeit
 import datetime
@@ -8,12 +11,12 @@ import random
 from tkinter import filedialog
 from queue import Queue
 import os
+import errno
 import sys
 import numpy
 from GpsCapture import GpsCapture
 from See3Cam import See3Cam
 from FPS import FPS
-from Controller.RecordingThreadController import RecordingThreadController
 from Controller.CamRecordThreadController import CamThreadController
 from Controller.GpsRecordThreadController import GpsThreadController
 from Controller.CamPollingThreadController import CamPollingThreadController
@@ -32,8 +35,7 @@ import imageio
 import timeit
 import time
 from statistics import mean
-from jproperties import Properties
-import set_id as s
+
 
 
 class ThreadedClient:
@@ -68,13 +70,13 @@ class ThreadedClient:
         self.gui = GuiPart(master, self, self.cameras_state, self.verify_gps_connection, self.recordData)
 
         if self.cameras_state[0]:
-            self.camera = See3Cam(src=self.cameras_state[1], width=1280, height=720, framerate=30, name="cam")
+            self.camera = See3Cam(src=self.cameras_state[1], width=1280, height=720, framerate=30, name="cam", label="1")
             self.camera.start()
             self.camPollThread = CamPollingThreadController(self, self.camera, self.gui, 1)
             self.camPollThread.start()
             self.camThread = CamThreadController(self, self.camera, self.camera.name, self.gui)
         if self.cameras_state[2]:
-            self.camera1 = See3Cam(src=self.cameras_state[3], width=1280, height=720, framerate=30, name="cam1")
+            self.camera1 = See3Cam(src=self.cameras_state[3], width=1280, height=720, framerate=30, name="cam1", label="2")
             self.camera1.start()
             self.camPollThread1 = CamPollingThreadController(self, self.camera1, self.gui, 2)
             self.camPollThread1.start()
@@ -164,15 +166,28 @@ class ThreadedClient:
 
     
     def browseDirectory(self):
-        self.directory = filedialog.askdirectory() +"/"
-        print(self.directory)
+        try:
+            self.directory = filedialog.askdirectory() +"/"
+        except TypeError:
+            self.alert_popup("Warning !","You have not selected a directory !", "The Data will be recorded on the last location")
+
 
     def recordData(self):
         """
         This function listens to the record button and starts the recording thread accordingly
         """
+
         if self.check:
             if not self.record:
+                self.dirname = self.gui.title.get()
+                try:
+                    os.mkdir(self.directory + self.dirname)
+                    os.mkdir(self.directory + self.dirname + "/Camera 1")
+                    os.mkdir(self.directory + self.dirname + "/Camera 2")
+                    os.mkdir(self.directory + self.dirname + "/GPS")
+                except FileExistsError:
+                    self.alert_popup("Error !", "Folder "+ self.directory + " already exists","Please Enter a new directory name in the field above")
+                    return
                 if self.camera is not None and self.camera.running:
                     self.camPollThread.stop()
                     self.camThread.start()
@@ -203,27 +218,26 @@ class ThreadedClient:
             self.gui.notification_label.configure(text="Cannot record, There is no device connected !")
 
 
-    # def stopRecord(self):
-    #     """
-    #     This function listens to the record button and starts the recording thread accordingly
-    #     """
-    #     if self.record:
-    #         self.gui.notification_label.configure(text="Recording Stopped")
-    #         if self.camera is not None and self.camera.running:    
-    #             self.camThread.stop()
-    #             self.camPollThread.start()
-    #         if self.camera1 is not None and self.camera1.running:
-    #             self.cam1Thread.stop()
-    #             self.camPollThread1.start()
-    #         if self.gps is not None and self.gps.running:
-    #             self.gpsThread.stop()
-    #         self.record = False
-    #         self.gui.btn_record.configure(text="Record Data", bg="green")
-    #         self.gui.progress_bar.stop()
-    #     else:
-    #         self.gui.notification_label.configure(text="Can't stop, there is no recording !")
-
      
+    def alert_popup(self, title, message, path):
+        """Generate a pop-up window for special messages."""
+        popup = Tk()
+        popup.title(title)
+        w = 400     # popup window width
+        h = 200     # popup window height
+        sw = popup.winfo_screenwidth()
+        sh = popup.winfo_screenheight()
+        x = (sw - w)/2
+        y = (sh - h)/2
+        popup.geometry('%dx%d+%d+%d' % (w, h, x, y))
+        m = message
+        m += '\n'
+        m += path
+        w = Label(popup, text=m, width=120, height=10)
+        w.pack()
+        b = Button(popup, text="OK", command=popup.destroy, width=10)
+        b.pack()
+        popup.mainloop()
 
     def find_cam(self):
         camera_indexes =[]

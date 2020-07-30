@@ -78,7 +78,7 @@ class CamThreadController:
 		start = time.time()
 		id = 0
 		frame_id = 0
-		frames_filename, video_filename = self.getNewFiles(self.client.directory, id, self.cam)
+		frames_filename, video_filename = self.getNewFiles(self.client.directory + "/" + self.client.dirname +"/Camera "+ self.cam.label + "/", id, self.cam)
 		while  not self.stop_record_thread.is_set() and not self.client.exitFlag:
 			ret, frame = self.cam.read()
 			if np.array_equal(self.f, frame):
@@ -91,7 +91,7 @@ class CamThreadController:
 				print("[INFO] elapsed time: {:.2f}".format(self.fps.elapsed()))
 				print("[INFO] approx. FPS: {:.2f}".format(self.fps.fps()))
 				id = id +1
-				frames_filename, video_filename = self.getNewFiles(self.client.directory, id, self.name)
+				frames_filename, video_filename = self.getNewFiles(self.client.directory + "/" + self.client.dirname +"/Camera "+ self.cam.label + "/", id, self.name)
 				frame_id = 0
 				start = time.time()
 				self.fps.start()
