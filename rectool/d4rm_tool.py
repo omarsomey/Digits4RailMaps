@@ -279,6 +279,8 @@ class ThreadedClient:
 def main():
     root = tkinter.Tk()
     root.title("Digits4RailMaps Recording Tool")
+    img = ImageTk.PhotoImage(file='kb.ico')
+    root.tk.call('wm', 'iconphoto', root._w, img)
     client = ThreadedClient(root)
 
     def close_application_globally():
