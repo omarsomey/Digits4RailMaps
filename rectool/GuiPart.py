@@ -32,6 +32,7 @@ class GuiPart:
         self.frame_height =800
         self.frame1_width = 900
         self.frame1_height = 800
+        self.switch_state = False
         self.img = None
         self.img1 = None
         
@@ -113,6 +114,7 @@ class GuiPart:
         self.systemInfo()
         self.progressBar()
         self.recordingButtons()
+        self.switchButton()
         
         
         
@@ -168,16 +170,25 @@ class GuiPart:
         self.progress_bar = ttk.Progressbar(self.rightframe, orient='horizontal', length = 500, mode='determinate')
         self.progress_bar.grid(row=11, sticky=W, pady=20, padx=20)
 
+    def switchButton(self):
+        self.switch_button = tkinter.Button(self.video_tab, text="Switch Cameras", command=self.switchCameras, font=("Arial Bold", 15))
+        self.switch_button.pack(side = tkinter.TOP)
+        self.topframe = Frame(self.video_tab, borderwidth=5, relief=tkinter.GROOVE)
+        self.topframe.pack(side = tkinter.TOP)
+
+    def switchCameras(self):
+        if self.client.cameras_state[0] and self.client.cameras_state[2]:
+            self.client.camera.label, self.client.camera1.label = self.client.camera1.label, self.client.camera.label
     
     def videoFrame(self):
         # Set up of the Right frame (Camera output)
-        self.videoframe = LabelFrame(self.video_tab, text="Camera output", font=("Arial Bold", 15), height=800, width=900, borderwidth=5, relief=tkinter.GROOVE)
+        self.videoframe = LabelFrame(self.video_tab, text="Camera output", font=("Arial Bold", 15), height=600, width=900, borderwidth=5, relief=tkinter.GROOVE)
         self.videoframe.pack(side = tkinter.LEFT)
         self.videoframe.pack_propagate(False)
 
     def videoFrame1(self):
         # Set up of the left frame (Camera output 1)
-        self.videoframe1 = LabelFrame(self.video_tab, text="Second Camera output", font=("Arial Bold", 15), height=800, width=900, borderwidth=5, relief=tkinter.GROOVE)
+        self.videoframe1 = LabelFrame(self.video_tab, text="Second Camera output", font=("Arial Bold", 15), height=600, width=900, borderwidth=5, relief=tkinter.GROOVE)
         self.videoframe1.pack(side = tkinter.LEFT)
         self.videoframe1.pack_propagate(False)
     

@@ -4,54 +4,59 @@ import time
 import datetime
 import io
 import numpy as np
-from FPS import FPS
-import PIL.Image, PIL.ImageTk
-import PIL 
-from PIL import Image
-from PIL import ImageTk
 import tkinter
-from FPS import FPS
 import imutils
 
 
 class CamPollingThreadController:
-	"""Separate Thread Class responsible of the files recording
+	"""Separate Thread Class responsible for polling the frames from the cameras
 	"""
-	def __init__(self, client, cam, gui, label):
+	def __init__(self, client, cam, gui):
 		"""Constructor
-		
-		Arguments:
-			videoDirectory {str} -- Path to the directory containing the videos and the csv files of the frames.
-			gui {GuiPart} -- GUI object to configure the Graphical user interface of the App.
+
+		Args:
+			client ([Tk]): [Tki client]
+			cam ([See3Cam]): [camera object]
+			gui ([GuiPart]): [GUI object]
 		"""
 		self.client = client
 		self.cam = cam
 		self.gui = gui
-		self.label = label
 		self.display_thread = None
 		self.stop_display_thread = threading.Event()
 		self.f = None
 	
 	def displayFrames(self):
-		self.gui.canvas.delete(self.gui.first_canvas)
-		self.gui.canvas1.delete(self.gui.second_canvas)
+		"""This function is displaying the frames into the canvas inside the GUI
+		"""
+
+		self.gui.canvas.delete(self.gui.first_canvas)   # Remove last picture in the first canvas
+		self.gui.canvas1.delete(self.gui.second_canvas) # Remove last picture in the second canvas
 		while not self.stop_display_thread.is_set() and not self.client.exitFlag:
-			ret, frame = self.cam.read()
-			if np.array_equal(self.f, frame) and frame is None:
+			ret, frame = self.cam.read()				# Read frame from the camera
+			if np.array_equal(self.f, frame) and frame is None: 
 				continue
 			self.f = frame
-			self.photo = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-			self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.photo)) # Transform the frame into PIL image
-			if self.label == 1:
+			self.photo = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # change color spaces from BGR to RGB
+			scale = 45
+			w = int(frame.shape[1]*scale / 100) 		# Get new width of the scaled frane
+			h = int(frame.shape[0]*scale / 100)			# Get new height of the scaled frame
+			self.photo = cv2.resize(self.photo, (w ,h), interpolation=cv2.INTER_AREA) # Req 132: Rescaling of the frames to new dimensions
+			self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.photo))
+			# Req 131: diplaying the frames into the canvas
+			if self.cam.label == "1": 
 				self.gui.first_canvas = self.gui.canvas.create_image(0, 0, image = self.photo, anchor = tkinter.NW)
 				self.gui.videoframe.image = self.photo
-			if self.label == 2:
+			if self.cam.label == "2":
 				self.gui.second_canvas = self.gui.canvas1.create_image(0, 0, image = self.photo, anchor = tkinter.NW)
 				self.gui.videoframe1.image = self.photo
+					
+				
+
 				
 
 	def start(self):
-		"""Function to start the recording thread
+		"""Function to start the polling thread
 		"""
 		self.stop_display_thread.clear()
 		self.display_thread = threading.Thread(target=self.displayFrames, args=())
@@ -59,7 +64,7 @@ class CamPollingThreadController:
 		self.display_thread.start()
 		
 	def stop(self):
-		"""Function to sto the recording thread
+		"""Function to sto the polling thread
 		"""
 		self.stop_display_thread.set()
 		self.display_thread.join(0.1)

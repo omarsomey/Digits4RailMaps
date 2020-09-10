@@ -2,40 +2,33 @@ import tkinter
 from tkinter import ttk
 from tkinter import Tk, W, E, Frame
 from tkinter import Button, Entry, Label, LabelFrame, StringVar
+from tkinter import filedialog
+import PIL.Image, PIL.ImageTk
+import PIL 
+from PIL import Image
+from PIL import ImageTk
 import time
 import timeit
 import datetime
 import threading
-import multiprocessing
 import random
-from tkinter import filedialog
-from queue import Queue
 import os
 import errno
 import sys
 import numpy
+import cv2
+import serial
+import serial.tools.list_ports
+import subprocess
+from subprocess import PIPE
+import imageio
+from GuiPart import GuiPart
 from GpsCapture import GpsCapture
 from See3Cam import See3Cam
 from FPS import FPS
 from Controller.CamRecordThreadController import CamThreadController
 from Controller.GpsRecordThreadController import GpsThreadController
 from Controller.CamPollingThreadController import CamPollingThreadController
-import cv2
-from GuiPart import GuiPart
-import serial
-import serial.tools.list_ports
-import PIL.Image, PIL.ImageTk
-import PIL 
-from PIL import Image
-from PIL import ImageTk
-import subprocess
-from subprocess import PIPE
-
-import imageio
-import timeit
-import time
-from statistics import mean
-
 
 
 class ThreadedClient:
@@ -65,6 +58,8 @@ class ThreadedClient:
         self.running = 1
         self.cameras_state = self.find_cam()
         self.verify_gps_connection, self.gps_port = self.find_gps()
+
+        
         print(self.cameras_state)
         print(self.verify_gps_connection, self.gps_port)
 
@@ -72,15 +67,15 @@ class ThreadedClient:
         self.gui = GuiPart(master, self, self.cameras_state, self.verify_gps_connection, self.recordData)
 
         if self.cameras_state[0]:
-            self.camera = See3Cam(src=self.cameras_state[1], width=1280, height=720, framerate=30, name="cam", label="1")
+            self.camera = See3Cam(src=self.cameras_state[1], width=1920, height=1080, framerate=30, name="cam", label="1")
             self.camera.start()
-            self.camPollThread = CamPollingThreadController(self, self.camera, self.gui, 1)
+            self.camPollThread = CamPollingThreadController(self, self.camera, self.gui)
             self.camPollThread.start()
             self.camThread = CamThreadController(self, self.camera, self.camera.name, self.gui)
         if self.cameras_state[2]:
-            self.camera1 = See3Cam(src=self.cameras_state[3], width=1280, height=720, framerate=30, name="cam1", label="2")
+            self.camera1 = See3Cam(src=self.cameras_state[3], width=1920, height=1080, framerate=30, name="cam1", label="2")
             self.camera1.start()
-            self.camPollThread1 = CamPollingThreadController(self, self.camera1, self.gui, 2)
+            self.camPollThread1 = CamPollingThreadController(self, self.camera1, self.gui)
             self.camPollThread1.start()
             self.cam1Thread = CamThreadController(self, self.camera1, self.camera1.name, self.gui)
         if self.verify_gps_connection:
@@ -151,7 +146,7 @@ class ThreadedClient:
 
 
     def checkCameraConnection(self, interval = 1):
-        """
+        """ 
         Thread to Check the port connection and the status of the Camera
         every second.
         """
@@ -193,19 +188,19 @@ class ThreadedClient:
                 self.dirname = self.gui.title.get()
                 try:
                     os.mkdir(self.directory + self.dirname)
-                    os.mkdir(self.directory + self.dirname + "/Camera 1")
-                    os.mkdir(self.directory + self.dirname + "/Camera 2")
-                    os.mkdir(self.directory + self.dirname + "/GPS")
                 except FileExistsError:
                     self.alert_popup("Error !", "Folder "+ self.directory + " already exists","Please Enter a new directory name in the field above")
                     return
                 if self.camera is not None and self.camera.running:
                     self.camPollThread.stop()
+                    os.mkdir(self.directory + self.dirname + "/Camera 1")
                     self.camThread.start()
                 if self.camera1 is not None and self.camera1.running:
                     self.camPollThread1.stop()
+                    os.mkdir(self.directory + self.dirname + "/Camera 2")
                     self.cam1Thread.start()
                 if self.gps is not None and self.gps.running:
+                    os.mkdir(self.directory + self.dirname + "/GPS")
                     self.gpsThread.start()
                 self.record = True
                 self.gui.btn_record.configure(text="Stop", bg="red")
@@ -213,7 +208,10 @@ class ThreadedClient:
                 self.gui.progress_bar.start(int(10000/100)) #  duration of videos in seconds divided by 100
             else:
                 self.gui.notification_label.configure(text="Recording Stopped")
-                if self.camera is not None and self.camera.running:    
+                self.gui.btn_record.configure(text="Record Data", bg="green")
+                self.gui.progress_bar.stop()
+                self.record = False
+                if self.camera is not None and self.camera.running:
                     self.camThread.stop()
                     self.camPollThread.start()
                 if self.camera1 is not None and self.camera1.running:
@@ -221,9 +219,7 @@ class ThreadedClient:
                     self.camPollThread1.start()
                 if self.gps is not None and self.gps.running:
                     self.gpsThread.stop()
-                    self.record = False
-                    self.gui.btn_record.configure(text="Record Data", bg="green")
-                    self.gui.progress_bar.stop()
+                    
 
         else:
             self.gui.notification_label.configure(text="Cannot record, There is no device connected !")
@@ -270,7 +266,6 @@ class ThreadedClient:
 
     def find_gps(self):
         myports = [tuple(p) for p in list(serial.tools.list_ports.comports())]
-
         for t in myports:
             if 'FT232R USB UART' in t:
                 gpsport = t[0]

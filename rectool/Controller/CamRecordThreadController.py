@@ -22,7 +22,7 @@ class CamThreadController:
 		self.name = name
 		self.gui = gui
 		self.video_path = self.client.directory
-		self.duration = 10
+		self.duration = 900
 		self.video_handler = cv2.VideoWriter()
 		self.record_thread = None
 		self.stop_record_thread = threading.Event()
@@ -112,7 +112,12 @@ class CamThreadController:
 		"""Function to sto the recording thread
 		"""
 		self.stop_record_thread.set()
-		self.record_thread.join(0.1)
+		try:
+			self.record_thread.join(0.1)
+		except AttributeError:
+			print("Attribute Error: thread already killed")
+
+		#self.record_thread.join(0.1)
 		self.record_thread = None
 		self.fps.stop()
 

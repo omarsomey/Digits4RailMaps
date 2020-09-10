@@ -5,7 +5,6 @@ from subprocess import PIPE
 import os
 import time
 import timeit
-from queue import Queue
 
 
 class See3Cam:
