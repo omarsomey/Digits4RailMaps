@@ -22,7 +22,7 @@ class CamThreadController:
 		self.name = name
 		self.gui = gui
 		self.video_path = self.client.directory
-		self.duration = 900
+		self.duration = 10
 		self.video_handler = cv2.VideoWriter()
 		self.record_thread = None
 		self.stop_record_thread = threading.Event()
@@ -78,11 +78,18 @@ class CamThreadController:
 		start = time.time()
 		id = 0
 		frame_id = 0
+		a = 0
+		c = 0
 		frames_filename, video_filename = self.getNewFiles(self.client.directory + "/" + self.client.dirname +"/Camera "+ self.cam.label + "/", id, self.cam)
 		while  not self.stop_record_thread.is_set() and not self.client.exitFlag:
 			ret, frame = self.cam.read()
 			if np.array_equal(self.f, frame):
 				continue
+			# b = time.time()-a
+			# print(b)
+			# print("DIF = ", (b-c)*1000)
+			# c = b
+			# a = time.time()
 			self.fps.update()
 			self.f = frame
 			currentTime = time.time()
@@ -117,7 +124,7 @@ class CamThreadController:
 		except AttributeError:
 			print("Attribute Error: thread already killed")
 
-		#self.record_thread.join(0.1)
+		self.record_thread.join(0.1)
 		self.record_thread = None
 		self.fps.stop()
 

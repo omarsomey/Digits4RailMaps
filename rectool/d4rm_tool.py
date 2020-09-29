@@ -29,6 +29,7 @@ from FPS import FPS
 from Controller.CamRecordThreadController import CamThreadController
 from Controller.GpsRecordThreadController import GpsThreadController
 from Controller.CamPollingThreadController import CamPollingThreadController
+import shutil
 
 
 class ThreadedClient:
@@ -54,10 +55,12 @@ class ThreadedClient:
         self.camera = None
         self.camera1 = None
         self.gps = None
-        self.check = False
+        self.check = True
         self.running = 1
         self.cameras_state = self.find_cam()
         self.verify_gps_connection, self.gps_port = self.find_gps()
+        self.verify_hd_connection = self.find_hd()
+        self.i = 0
 
         
         print(self.cameras_state)
@@ -115,7 +118,7 @@ class ThreadedClient:
             self.check = False
 
         # Update the GUI of the camera and GPS status
-        self.gui.processIncoming(self.cameras_state,  self.verify_gps_connection, self.record)
+        self.gui.processIncoming(self.cameras_state,  self.verify_gps_connection, self.verify_hd_connection, self.record)
             
 
         if not self.running:
@@ -131,6 +134,7 @@ class ThreadedClient:
         while not self.exitFlag:
             # Get the GPS port connection
             self.verify_gps_connection, self.gps_port = self.find_gps()
+            #self.verify_hd_connection = self.find_hd()
             # if not verify_gps_connection:
             #     self.gps.running = False
             #     self.gps.isConnected = False
@@ -152,21 +156,47 @@ class ThreadedClient:
         """
         while not self.exitFlag:
             self.cameras_state = self.find_cam()
-            if self.cameras_state[0]:
-                self.mem = True
-            if self.cameras_state[2]:
-                self.mem1 = True
-            if not self.cameras_state[0]:
-                if self.mem:
-                    self.alert_popup("Error !", "A camera has been unplugged !", "Please connect the camera again and restart the Tool.")
-                time.sleep(1)
-                continue
-            if not self.cameras_state[2]:
-                if self.mem1:
-                    print("D")
-                    self.alert_popup("Error !", "A camera has been unplugged !", "Please connect the camera again and restart the Tool.")
-                time.sleep(1)
-                continue
+            # if (self.camera is not None) and not (self.cameras_state[0] or not self.camera.isRunning()):
+            #     self.camThread.stop()
+            #     self.camPollThread.stop()
+            #     self.camera.stop()
+            #     self.camera = None
+            # if (self.camera1 is not None) and (not self.cameras_state[2] or not self.camera1.isRunning()):
+            #     self.cam1Thread.stop()
+            #     self.camPollThread1.stop()
+            #     self.camera1.stop()
+            #     self.camera1 = None
+            # if self.cameras_state[0] and self.camera is None:
+            #     self.camera = See3Cam(src=self.cameras_state[1], width=1920, height=1080, framerate=30, name="cam", label="1")
+            #     self.camera.start()
+            #     self.camPollThread = CamPollingThreadController(self, self.camera, self.gui)
+            #     self.camPollThread.start()
+                
+            # if self.cameras_state[2] and self.camera1 is None:
+            #     self.camera1 = See3Cam(src=self.cameras_state[3], width=1920, height=1080, framerate=30, name="cam1", label="2")
+            #     self.camera1.start()
+            #     self.camPollThread1 = CamPollingThreadController(self, self.camera1, self.gui)
+            #     self.camPollThread1.start()
+            
+            
+            # if self.cameras_state[0]:
+            #     self.mem = True
+            # if self.cameras_state[2]:
+            #     self.mem1 = True
+            # if not self.cameras_state[0]:
+            #     if self.mem:
+            #         self.camera.stop()
+            #         self.alert_popup("Error !", "A camera has been unplugged !", "Please connect the camera again and restart the Tool.")
+            #         self.mem = False
+            #         self.cam
+            #     continue
+            # if not self.cameras_state[2]:
+            #     if self.mem1:
+            #         self.camera1.stop()
+            #         self.alert_popup("Error !", "A camera has been unplugged !", "Please connect the camera again and restart the Tool.")
+            #         self.mem1 = False
+
+            #     continue
 
             time.sleep(interval)
 
@@ -182,20 +212,24 @@ class ThreadedClient:
         """
         This function listens to the record button and starts the recording thread accordingly
         """
-
         if self.check:
             if not self.record:
                 self.dirname = self.gui.title.get()
                 try:
                     os.mkdir(self.directory + self.dirname)
                 except FileExistsError:
-                    self.alert_popup("Error !", "Folder "+ self.directory + " already exists","Please Enter a new directory name in the field above")
-                    return
-                if self.camera is not None and self.camera.running:
+                    self.i = self.i+1
+                    #self.alert_popup("Error !", "Folder "+ self.directory + " already exists","Please Enter a new directory name in the field above")
+                    if self.i>=10:
+                        self.dirname = self.dirname +"_"+str(self.i)
+                    else:
+                        self.dirname = self.dirname+"_0"+str(self.i)
+                    os.mkdir(self.directory + self.dirname)
+                if self.camera is not None:
                     self.camPollThread.stop()
                     os.mkdir(self.directory + self.dirname + "/Camera 1")
                     self.camThread.start()
-                if self.camera1 is not None and self.camera1.running:
+                if self.camera1 is not None:
                     self.camPollThread1.stop()
                     os.mkdir(self.directory + self.dirname + "/Camera 2")
                     self.cam1Thread.start()
@@ -207,19 +241,19 @@ class ThreadedClient:
                 self.gui.notification_label.configure(text="Recording in Progress")
                 self.gui.progress_bar.start(int(10000/100)) #  duration of videos in seconds divided by 100
             else:
-                self.gui.notification_label.configure(text="Recording Stopped")
-                self.gui.btn_record.configure(text="Record Data", bg="green")
-                self.gui.progress_bar.stop()
-                self.record = False
-                if self.camera is not None and self.camera.running:
+                if self.camera is not None:
                     self.camThread.stop()
                     self.camPollThread.start()
-                if self.camera1 is not None and self.camera1.running:
+                if self.camera1 is not None:
                     self.cam1Thread.stop()
                     self.camPollThread1.start()
                 if self.gps is not None and self.gps.running:
                     self.gpsThread.stop()
-                    
+                self.gui.notification_label.configure(text="Recording Stopped")
+                self.gui.btn_record.configure(text="Record Data", bg="green")
+                self.gui.progress_bar.stop()
+                self.record = False
+                        
 
         else:
             self.gui.notification_label.configure(text="Cannot record, There is no device connected !")
@@ -267,13 +301,19 @@ class ThreadedClient:
     def find_gps(self):
         myports = [tuple(p) for p in list(serial.tools.list_ports.comports())]
         for t in myports:
-            if 'FT232R USB UART' in t:
+            if '/dev/ttyUSB0' in t:
                 gpsport = t[0]
                 self.isConnected = True
                 return(True, gpsport)
 
         self.isConnected= False
         return (False, None)
+
+    def find_hd(self):
+        if not os.listdir("/media/knorr-bremse"):
+            return False
+        else:
+            return True
     
 
 def main():
@@ -289,13 +329,13 @@ def main():
         the user exits the App.    
         """
         client.exitFlag = True
-        if client.camera is not None and client.camera.running:
+        if client.camera is not None:
             if client.record:  
                 client.camThread.stop()
             else:
                 client.camPollThread.stop()
             client.camera.stop()
-        if client.camera1 is not None and client.camera1.running:
+        if client.camera1 is not None:
             if client.record:
                 client.cam1Thread.stop()
             else:

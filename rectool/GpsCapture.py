@@ -46,7 +46,7 @@ class GpsCapture:
         myports = [tuple(p) for p in list(serial.tools.list_ports.comports())]
 
         for t in myports:
-            if 'FT232R USB UART' in t:
+            if '/dev/ttyUSB0' in t:
                 gpsport = t[0]
                 self.isConnected = True
                 return(True, gpsport)

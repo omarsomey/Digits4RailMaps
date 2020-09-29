@@ -20,7 +20,7 @@ class GpsThreadController:
 		self.gui = gui
 		self.gps_path = self.client.directory
 		self.gps_id = 0
-		self.duration = 900
+		self.duration = 10
 		self.record_thread = None
 		self.stop_record_thread = threading.Event()
 

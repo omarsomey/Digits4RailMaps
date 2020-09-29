@@ -77,6 +77,7 @@ class GuiPart:
         self.leftframe.pack_propagate(False)
         self.cameraLabel()
         self.gpsLabel()
+        self.hardDriveLabel()
 
     
     def cameraLabel(self):
@@ -101,6 +102,13 @@ class GuiPart:
         
         self.gps_device_label = tkinter.Label(self.leftframe, text="Unknown", font=("Arial Bold", 20),padx=5, pady=15)
         self.gps_device_label.pack(fill=tkinter.X)
+    
+    def hardDriveLabel(self):
+        self.hd_status_label = tkinter.Label(self.leftframe, text="Hard Drive", font=("Arial Bold", 15), padx=15, pady=15)
+        self.hd_status_label.pack(fill=tkinter.X)
+        
+        self.hd_device_label = tkinter.Label(self.leftframe, text="Unknown", font=("Arial Bold", 20),padx=5, pady=15)
+        self.hd_device_label.pack(fill=tkinter.X)
     
     def rightFrame(self):
         self.rightframe = LabelFrame(self.recording_tab, text="Recording Tab", font=("Arial Bold", 20), height=800, width=1300, borderwidth=5, relief=tkinter.GROOVE)
@@ -205,7 +213,7 @@ class GuiPart:
         self.second_canvas = self.canvas1.create_text(0,0, font="Times 20 italic bold", text=" Unknown", anchor = tkinter.NW)
 
 
-    def processIncoming(self,camStatus, gpsStatus, record):
+    def processIncoming(self,camStatus, gpsStatus, hdStatus, record):
         """Handle the Status of the devices every 1 ms"""
         
         self.location.configure(text=self.client.directory)
@@ -215,7 +223,24 @@ class GuiPart:
         self.free = (free // (2**30))
         self.memory_bar["value"]= self.used
         self.memory_bar["maximum"]= self.total
-        self.disk_space.configure(text="Free Space: "+ str(self.free)+"GB")
+        self.disk_space.configure(text="Free Space:"+ str(self.free)+"GB")
+
+        if hdStatus:
+            try:
+                total, used, free = shutil.disk_usage("/media/knorr-bremse/Secure_HDD")
+            except FileNotFoundError:
+                self.hd_device_label.configure(text="Disconnected", bg="red")
+                self.hd_status_label.configure(bg="red")
+
+            free = (free // (2**30))
+            self.hd_device_label.configure(text="Connected  Free Space:"+str(free)+"GB", bg="green")
+            self.hd_status_label.configure(bg="green")
+        else:
+            self.hd_device_label.configure(text="Disconnected", bg="red")
+            self.hd_status_label.configure(bg="red")
+
+
+
         # If GPS connected
         if gpsStatus:
             self.gps_device_label.configure(text="Connected", bg="green")

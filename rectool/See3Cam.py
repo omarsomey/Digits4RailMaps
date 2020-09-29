@@ -22,14 +22,19 @@ class See3Cam:
         self.stream.set(3, width)
         self.stream.set(4, height)
         self.stream.set(cv2.CAP_PROP_FPS, framerate)
-        self.running = self.stream.isOpened()
         self.connected = True
         self.stopped = False
 
     def start(self):
+        # self.stream = cv2.VideoCapture(self.src)
+        # self.stream.set(3, self.width)
+        # self.stream.set(4, self.height)
+        # self.stream.set(cv2.CAP_PROP_FPS, self.framerate)
         t = Thread(target=self.update, args=())
         t.daemon = True
         t.start()
+        print("Camera started")
+        #(self.grabbed, self.frame) = self.stream.read()
         return self
     
     def update(self):
@@ -40,6 +45,7 @@ class See3Cam:
 
     
     def read(self):
+        #(self.grabbed, self.frame) = self.stream.read()
         return self.grabbed ,self.frame
 
     def stop(self):
@@ -47,14 +53,5 @@ class See3Cam:
         self.stream.release()
     
 
-    def find_cam(self, cam):
-        cmd = ["/usr/bin/v4l2-ctl", "--list-devices"]
-        out, err = subprocess.Popen(cmd,stdout=PIPE, stderr=PIPE).communicate()
-        out, err = out.strip(), err.strip()
-        for l in [i.split(b'\n\t') for i in out.split(b'\n\n')]:
-            if cam in l[0].decode(encoding="UTF-8"):
-                return (True, l[1].decode(encoding="UTF-8")[-1])
-        return False, None
-    
     
 

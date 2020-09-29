@@ -6,6 +6,8 @@ import io
 import numpy as np
 import tkinter
 import imutils
+import PIL 
+
 
 
 class CamPollingThreadController:
