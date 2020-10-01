@@ -7,7 +7,7 @@ import numpy as np
 import tkinter
 import imutils
 import PIL 
-
+from FPS import FPS
 
 
 class CamPollingThreadController:
@@ -27,6 +27,7 @@ class CamPollingThreadController:
 		self.display_thread = None
 		self.stop_display_thread = threading.Event()
 		self.f = None
+		self.fps = FPS()
 	
 	def displayFrames(self):
 		"""This function is displaying the frames into the canvas inside the GUI
@@ -34,18 +35,28 @@ class CamPollingThreadController:
 
 		self.gui.canvas.delete(self.gui.first_canvas)   # Remove last picture in the first canvas
 		self.gui.canvas1.delete(self.gui.second_canvas) # Remove last picture in the second canvas
+		self.fps.start()
+		start = time.time()
 		while not self.stop_display_thread.is_set() and not self.client.exitFlag:
 			ret, frame = self.cam.read()				# Read frame from the camera
-			if np.array_equal(self.f, frame) and frame is None: 
+			if np.array_equal(self.f, frame):
 				continue
+			self.fps.update()
 			self.f = frame
+			currentTime = time.time()
+			if (currentTime-start)>=10:
+				self.fps.stop()
+				print("[INFO] elapsed time: {:.2f}".format(self.fps.elapsed()))
+				print("[INFO] approx. FPS: {:.2f}".format(self.fps.fps()))
+				start = time.time()
+				self.fps.start()
 			self.photo = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # change color spaces from BGR to RGB
 			scale = 45
 			w = int(frame.shape[1]*scale / 100) 		# Get new width of the scaled frane
 			h = int(frame.shape[0]*scale / 100)			# Get new height of the scaled frame
 			self.photo = cv2.resize(self.photo, (w ,h), interpolation=cv2.INTER_AREA) # Req 132: Rescaling of the frames to new dimensions
 			self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.photo))
-			# Req 131: diplaying the frames into the canvas
+
 			if self.cam.label == "1": 
 				self.gui.first_canvas = self.gui.canvas.create_image(0, 0, image = self.photo, anchor = tkinter.NW)
 				self.gui.videoframe.image = self.photo

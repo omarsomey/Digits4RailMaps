@@ -73,7 +73,7 @@ class CamThreadController:
 	
 	def record(self):
 		"""This function is the main thread 
-		"""
+		# """
 		self.fps.start()
 		start = time.time()
 		id = 0
@@ -94,6 +94,7 @@ class CamThreadController:
 			self.f = frame
 			currentTime = time.time()
 			if(int(currentTime-start) >= int(self.duration)):
+				self.video_handler.release()
 				self.fps.stop()
 				print("[INFO] elapsed time: {:.2f}".format(self.fps.elapsed()))
 				print("[INFO] approx. FPS: {:.2f}".format(self.fps.fps()))

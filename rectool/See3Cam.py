@@ -26,15 +26,10 @@ class See3Cam:
         self.stopped = False
 
     def start(self):
-        # self.stream = cv2.VideoCapture(self.src)
-        # self.stream.set(3, self.width)
-        # self.stream.set(4, self.height)
-        # self.stream.set(cv2.CAP_PROP_FPS, self.framerate)
         t = Thread(target=self.update, args=())
         t.daemon = True
         t.start()
         print("Camera started")
-        #(self.grabbed, self.frame) = self.stream.read()
         return self
     
     def update(self):
@@ -45,7 +40,6 @@ class See3Cam:
 
     
     def read(self):
-        #(self.grabbed, self.frame) = self.stream.read()
         return self.grabbed ,self.frame
 
     def stop(self):

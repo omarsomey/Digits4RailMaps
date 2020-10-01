@@ -19,7 +19,7 @@ a= 0
 c = 0
 f = None
 # Define the codec and create VideoWriter object.The output is stored in 'outpy.avi' file.
-out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('X','V','I','D'), 30, (frame_width,frame_height))
 
 while(True):
   ret, frame = cap.read()
