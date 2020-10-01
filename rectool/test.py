@@ -3,6 +3,8 @@ import subprocess
 from subprocess import PIPE
 import time
 import cv2
+from FPS import FPS
+import numpy as np
 
 def find_cam():
     camera_indexes =[]
@@ -23,24 +25,54 @@ def find_cam():
 
 
 def main():
+    fps = FPS()
+    fps1= FPS()
     print(find_cam())
     cam = See3Cam(src=find_cam()[1], width=1920, height=1080, framerate=30, name="cam", label="1")
     cam.start()
+    cam1 = See3Cam(src=find_cam()[3], width=1920, height=1080, framerate=30, name="cam", label="1")
+    cam1.start()
     disc = False
+    start = time.time()
+    fps.start()
+    fps1.start()
+    f = None
+    f1 = None
     while True:
-        if not find_cam()[0]:
-            cam = None
-            disc= True
-            continue
-        if find_cam()[0] and disc:
-            cam = See3Cam(src=find_cam()[1], width=1920, height=1080, framerate=30, name="cam", label="1")
-            cam.start()
-            disc = False
-        f = cam.read()
+        ret, frame = cam.read()
+        ret1, frame1 = cam1.read()
+        if not np.array_equal(f, frame):
+            fps.update()
+        if not np.array_equal(f1, frame1):
+            fps1.update()
+        f = frame
+        f1 = frame1
+        currentTime = time.time()
+        if (currentTime-start) >= 10 :
+            fps.stop()
+            fps1.stop()
+            print("[INFO] elapsed time: {:.2f}".format(fps.elapsed()))
+            print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
+            print("[INFO] elapsed time: {:.2f}".format(fps1.elapsed()))
+            print("[INFO] approx. FPS: {:.2f}".format(fps1.fps()))
+            start = time.time()
+            fps.start()
+            fps1.start()
 
-        cv2.imshow('preview',f)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+
+        # if not find_cam()[0]:
+        #     cam = None
+        #     disc= True
+        #     continue   
+        # if find_cam()[0] and disc:
+        #     cam = See3Cam(src=find_cam()[1], width=1920, height=1080, framerate=30, name="cam", label="1")
+        #     cam.start()
+        #     disc = False
+        # f = cam.read()
+
+        # cv2.imshow('preview',f)
+        # if cv2.waitKey(1) & 0xFF == ord('q'):
+        #     break
 
 
 

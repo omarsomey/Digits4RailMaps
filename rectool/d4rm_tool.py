@@ -70,7 +70,7 @@ class ThreadedClient:
         self.gui = GuiPart(master, self, self.cameras_state, self.verify_gps_connection, self.recordData)
 
         if self.cameras_state[0]:
-            self.camera = See3Cam(src=self.cameras_state[1], width=1920, height=1080, framerate=30, name="cam", label="1")
+            self.camera = See3Cam(src=self.cameras_state[1], width=1980, height=1080, framerate=30, name="cam", label="1")
             self.camera.start()
             self.camPollThread = CamPollingThreadController(self, self.camera, self.gui)
             self.camPollThread.start()
