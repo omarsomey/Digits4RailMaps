@@ -30,21 +30,29 @@ def main():
     print(find_cam())
     cam = See3Cam(src=find_cam()[1], width=1920, height=1080, framerate=30, name="cam", label="1")
     cam.start()
-    cam1 = See3Cam(src=find_cam()[3], width=1920, height=1080, framerate=30, name="cam", label="1")
+    cam1 = See3Cam(src=find_cam()[3], width=1920, height=1080, framerate=30, name="cam", label="2")
     cam1.start()
+    time.sleep(2)
     disc = False
     start = time.time()
     fps.start()
     fps1.start()
     f = None
     f1 = None
+
+    out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 28, (1920,1080))
+    out1 = cv2.VideoWriter('outpy1.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 28, (1920,1080))
+
+
     while True:
         ret, frame = cam.read()
+        if ret: 
+            if not np.array_equal(f, frame):
+                fps.update()
         ret1, frame1 = cam1.read()
-        if not np.array_equal(f, frame):
-            fps.update()
-        if not np.array_equal(f1, frame1):
-            fps1.update()
+        if ret1:
+            if not np.array_equal(f1, frame1):
+                fps1.update()
         f = frame
         f1 = frame1
         currentTime = time.time()
@@ -58,6 +66,15 @@ def main():
             start = time.time()
             fps.start()
             fps1.start()
+        out.write(frame)
+        out1.write(frame1)
+        if cv2.waitKey(1) & 0xFF ==ord('q'):
+            break
+        
+    out.release()
+    out1.release()
+    cam.stop()
+    cam1.stop()
 
 
         # if not find_cam()[0]:

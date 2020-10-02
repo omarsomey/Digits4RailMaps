@@ -65,7 +65,7 @@ class GpsCapture:
         """
         if self.isConnected:
             try:
-                self.ser = serial.Serial(port= port,baudrate=baudrate,parity=serial.PARITY_ODD,stopbits=serial.STOPBITS_TWO,bytesize=serial.SEVENBITS)
+                self.ser = serial.Serial(port= port,baudrate=baudrate,parity=serial.PARITY_NONE,stopbits=serial.STOPBITS_ONE,bytesize=serial.EIGHTBITS)
                 self.running = True
             except:
                 print("There was a Problem opening the GPS device")
@@ -94,7 +94,7 @@ class GpsCapture:
         """This function read he differents values of the gps.
         """
         stringSplit = str(self.gpsSentence).split(',')
-        if stringSplit[0] == "b\'$GNGGA":
+        if stringSplit[0] == "b\'$GPGGA":
             self.sentence_identifier = stringSplit[0]
             self.g_time              = stringSplit[1]
             self.latitude            = stringSplit[2]

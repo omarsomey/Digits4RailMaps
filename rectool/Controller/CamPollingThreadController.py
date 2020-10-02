@@ -51,7 +51,7 @@ class CamPollingThreadController:
 				start = time.time()
 				self.fps.start()
 			self.photo = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # change color spaces from BGR to RGB
-			scale = 45
+			scale = 70
 			w = int(frame.shape[1]*scale / 100) 		# Get new width of the scaled frane
 			h = int(frame.shape[0]*scale / 100)			# Get new height of the scaled frame
 			self.photo = cv2.resize(self.photo, (w ,h), interpolation=cv2.INTER_AREA) # Req 132: Rescaling of the frames to new dimensions
