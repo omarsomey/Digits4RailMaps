@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter import Tk, W, E, Frame
 from tkinter import Button, Entry, Label, LabelFrame, StringVar
 from tkinter import IntVar
+from tkinter import filedialog
 from queue import Queue
 import PIL.Image, PIL.ImageTk
 import PIL 
@@ -51,9 +52,11 @@ class GuiPart:
         self.tab_parent = ttk.Notebook(master)
         self.recording_tab = ttk.Frame(self.tab_parent)
         self.video_tab = ttk.Frame(self.tab_parent)
+        self.options_tab = ttk.Frame(self.tab_parent)
 
         self.tab_parent.add(self.recording_tab, text="Data recording",)
         self.tab_parent.add(self.video_tab, text="Video Preview")
+        self.tab_parent.add(self.options_tab, text="Options")
         self.tab_parent.pack(expand=1, fill='both')
 
 
@@ -63,6 +66,7 @@ class GuiPart:
         self.videoFrame()
         self.videoFrame1()
         self.framesCanvas()
+        self.optionsFrame()
 
     def topFrame(self):
         #welcome text
@@ -138,7 +142,7 @@ class GuiPart:
     def recordingLocation(self):
         self.location_label = tkinter.Label(self.rightframe, text="Recording Location :", font=("Arial Bold", 20,'bold'),padx=20, pady=15)
         self.location_label.grid(row=3, sticky=W)
-        self.btn_record = tkinter.Button(self.rightframe, text="Browse Directory", command=self.client.browseDirectory, font=("Arial Bold", 15))
+        self.btn_record = tkinter.Button(self.rightframe, text="Browse Directory", command=self.browseDirectory, font=("Arial Bold", 15))
         self.btn_record.grid(row=3, column=1, sticky=W, pady=0, padx=20)
         self.location = tkinter.Label(self.rightframe, text=self.client.directory, font=("Arial Bold", 15), padx=5, pady=15)
         self.location.grid(row=4, column=0, columnspan=2, sticky=W, padx=20)
@@ -211,6 +215,65 @@ class GuiPart:
         self.canvas1 = tkinter.Canvas(self.videoframe1, width = self.frame1_width, height = self.frame1_height, highlightcolor = "red", bd=5)
         self.canvas1.pack(anchor=tkinter.NE)
         self.second_canvas = self.canvas1.create_text(0,0, font="Times 20 italic bold", text=" Unknown", anchor = tkinter.NW)
+
+    def optionsFrame(self):
+        
+        title = tkinter.Label(self.options_tab, borderwidth=5, relief=tkinter.GROOVE, text="   Digits4RailMaps Recording Tool   ", font=("Arial Bold", 30), pady=10)
+        title.pack(side = tkinter.TOP)
+        frame4 = tkinter.LabelFrame(self.options_tab, text="Camera Options", font=("Arial Bold", 20), height=400, width=250, relief="ridge", borderwidth=2)
+        #frame4.configure(bg="yellow")
+        frame4.pack(fill=tkinter.X)
+        #frame4.grid(row=1, column =0)
+        #frame4.pack_propagate(False)
+        label_options1 = tkinter.Label(frame4, text="Camera Resolution:", font=("Arial Bold", 18))
+        label_options1.grid(row=1, column =0,padx=50, pady=15)
+       
+        self.hd_button = tkinter.Button(frame4, width= 15, text="HD", font=("Arial Bold", 15),command=self.HD)
+
+        self.hd_button.grid(row=1, column =1,padx=10, pady=15)
+
+        self.fullhd_button = tkinter.Button(frame4, width=15, text="FullHD", font=("Arial Bold", 15),command=self.fullHD)
+
+        self.fullhd_button.grid(row=1, column =2,padx=10, pady=15)
+
+
+    def fullHD(self):
+
+        self.fullhd_button.configure(bg="green", relief='flat')
+
+        self.hd_button.configure(bg="#F0F0F0", relief='raised')
+
+    def HD(self):
+
+        self.hd_button.configure(bg="green", relief='flat')
+
+        self.fullhd_button.configure(bg="#F0F0F0", relief='raised')
+    
+    def browseDirectory(self):
+        try:
+            self.client.directory = filedialog.askdirectory() +"/"
+        except TypeError:
+            self.alert_popup("Warning !","You have not selected a directory !", "The Data will be recorded on the last location")
+
+    def alert_popup(self, title, message, path):
+        """Generate a pop-up window for special messages."""
+        popup = Tk()
+        popup.title(title)
+        w = 400     # popup window width
+        h = 200     # popup window height
+        sw = popup.winfo_screenwidth()
+        sh = popup.winfo_screenheight()
+        x = (sw - w)/2
+        y = (sh - h)/2
+        popup.geometry('%dx%d+%d+%d' % (w, h, x, y))
+        m = message
+        m += '\n'
+        m += path
+        w = Label(popup, text=m, width=120, height=10)
+        w.pack()
+        b = Button(popup, text="OK", command=popup.destroy, width=10)
+        b.pack()
+        popup.mainloop()
 
 
     def processIncoming(self,camStatus, gpsStatus, hdStatus, record):

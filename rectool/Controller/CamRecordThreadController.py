@@ -46,7 +46,7 @@ class CamThreadController:
 		self.frames_recorder.write("frames_id,frames_timestamp \n")
 		self.frames_recorder.close()
 		video_filename = videoDirectory + "track_video_"+ self.name +"_" + str(id) +"_" + time.strftime("%d-%m-%Y-%H-%M-%S") + ".avi"
-		self.video_handler.open(video_filename, self.fourcc_codec, 30, (self.client.camera.width,self.client.camera.height))
+		self.video_handler.open(video_filename, self.fourcc_codec, 28, (self.client.camera.width,self.client.camera.height))
 		return  frames_filename, video_filename
 
 	def openfiles(self, frames_filename):
@@ -74,23 +74,15 @@ class CamThreadController:
 	def record(self):
 		"""This function is the main thread 
 		# """
-		self.fps.start()
 		start = time.time()
+		self.fps.start()
 		id = 0
 		frame_id = 0
-		a = 0
-		c = 0
 		frames_filename, video_filename = self.getNewFiles(self.client.directory + "/" + self.client.dirname +"/Camera "+ self.cam.label + "/", id, self.cam)
 		while  not self.stop_record_thread.is_set() and not self.client.exitFlag:
 			ret, frame = self.cam.read()
 			if np.array_equal(self.f, frame):
 				continue
-			# b = time.time()-a
-			# print(b)
-			# print("DIF = ", (b-c)*1000)
-			# c = b
-			# a = time.time()
-			self.fps.update()
 			self.f = frame
 			currentTime = time.time()
 			if(int(currentTime-start) >= int(self.duration)):
@@ -105,8 +97,12 @@ class CamThreadController:
 				self.fps.start()
 			self.openfiles(frames_filename)
 			self.write(self.video_handler, frame, self.frames_recorder, frame_id)
+			self.fps.update()
 			frame_id = frame_id +1
 		self.video_handler.release()
+		self.fps.stop()
+		print("[INFO] elapsed time: {:.2f}".format(self.fps.elapsed()))
+		print("[INFO] approx. FPS: {:.2f}".format(self.fps.fps()))
 			
 	def start(self):
 		"""Function to start the recording thread
